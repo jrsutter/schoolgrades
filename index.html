@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Homework Submission</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    label { display: block; margin-top: 1rem; }
+    button { margin-top: 1rem; padding: 0.4rem 0.8rem; cursor: pointer; }
+    #teacherTools { display: none; margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 1rem; }
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: red;
+      margin-left: 8px;
+      vertical-align: middle;
+      transition: background-color 0.3s ease;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    th { background: #f4f4f4; }
+    #entriesTableContainer {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>Homework Submission</h2>
+
+  <form id="submitForm">
+    <label>Student ID: <input type="text" id="studentId" required></label>
+    <label>Unit:
+      <select id="unit" required>
+        <option value="">Select</option>
+        <option>Unit 1</option>
+        <option>Unit 2</option>
+        <option>Unit 3</option>
+      </select>
+    </label>
+    <label>Homework Number:
+      <select id="homework" required>
+        <option value="">Select</option>
+        <option>Homework 1</option>
+        <option>Homework 2</option>
+        <option>Homework 3</option>
+      </select>
+    </label>
+    <label>Score: <input type="number" id="score" required></label>
+    <button type="submit">Submit</button>
+  </form>
+
+  <p id="message"></p>
+
+  <hr>
+  <h3>Teacher Access</h3>
+  <input type="password" id="teacherId" placeholder="Enter Teacher Code">
+  <button id="checkTeacher">Enter</button>
+
+  <div id="teacherTools">
+    <h3>Teacher Tools</h3>
+    <p>You are logged in as Teacher.</p>
+
+    <label>CSV File Name:
+      <input type="text" id="csvName" placeholder="e.g. Period2_Unit3">
+    </label>
+    <button id="downloadCSV">Download & Clear Sheet</button>
+
+    <hr>
+    <p>
+      <strong>Current Entries:</strong> 
+      <span id="entryCount">Loading...</span>
+      <span id="statusDot" class="status-dot"></span>
+    </p>
+
+    <div id="entriesTableContainer">
+      <table id="entriesTable">
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Unit</th>
+            <th>Homework</th>
+            <th>Score</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwJmZVboBgWdqo1-Fg4ALkwiy-e_ZrtyqQVIGLUnu8NUJ4MrssAVhKeYukeqcs4C88V3A/exec"; // Replace with your deployed Apps Script URL
+    let countInterval = null;
+    let dotIsGreen = false;
+
+    function toggleDot() {
+      const dot = document.getElementById('statusDot');
+      dotIsGreen = !dotIsGreen;
+      dot.style.backgroundColor = dotIsGreen ? 'green' : 'red';
+    }
+
+    async function getEntryData() {
+      try {
+        const res = await fetch(`${scriptURL}?action=list&_=${Date.now()}`);
+        const data = await res.json();
+        document.getElementById('entryCount').textContent = data.length;
+
+        const tbody = document.querySelector('#entriesTable tbody');
+        tbody.innerHTML = '';
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          row.forEach(cell => {
+            const td = document.createElement('td');
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+
+        toggleDot();
+      } catch (err) {
+        document.getElementById('entryCount').textContent = "Error";
+      }
+    }
+
+    document.getElementById('submitForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        studentId: document.getElementById('studentId').value,
+        unit: document.getElementById('unit').value,
+        homework: document.getElementById('homework').value,
+        score: document.getElementById('score').value,
+        timestamp: new Date().toLocaleString()
+      };
+      try {
+        await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) });
+        document.getElementById('message').textContent = '✅ Submission received!';
+        e.target.reset();
+      } catch {
+        document.getElementById('message').textContent = '⚠️ Error submitting data.';
+      }
+    });
+
+    document.getElementById('checkTeacher').addEventListener('click', () => {
+      const enteredId = document.getElementById('teacherId').value.trim();
+      if (enteredId === '159357') {
+        document.getElementById('teacherTools').style.display = 'block';
+        document.getElementById('teacherId').value = '';
+        document.getElementById('checkTeacher').disabled = true;
+        document.getElementById('teacherId').style.display = 'none';
+        getEntryData();
+        countInterval = setInterval(getEntryData, 3000); // auto update every 3 sec
+      } else {
+        alert('Invalid Teacher Code.');
+      }
+    });
+
+    document.getElementById('downloadCSV').addEventListener('click', () => {
+      const name = document.getElementById('csvName').value.trim() || 'class_data';
+      const filename = encodeURIComponent(name + '.csv');
+      const downloadURL = `${scriptURL}?action=download&filename=${filename}`;
+      window.open(downloadURL, '_blank');
+      setTimeout(getEntryData, 3000);
+    });
+  </script>
+</body>
+</html>
