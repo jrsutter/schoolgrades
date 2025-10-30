@@ -20,18 +20,36 @@
   <h2>Homework Submission</h2>
 
   <form id="submitForm">
-    <label>Student Code: <input type="text" id="studentCode" required></label>
-    <label>Student ID: <input type="number" id="studentId" min="0" max="999999" required></label>
-    <label>Class:
-      <select id="classPeriod" required><option>Loading...</option></select>
+    <label>
+      Student Code:
+      <input type="text" id="studentCode" required placeholder="Enter student code">
     </label>
-    <label>Unit:
-      <select id="unit" required><option>Loading...</option></select>
+
+    <label>
+      Student ID:
+      <input type="number" id="studentId" min="0" max="999999" required placeholder="0 - 999999">
     </label>
-    <label>Homework Number:
-      <select id="homework" required><option>Loading...</option></select>
+
+    <label>
+      Class:
+      <select id="classPeriod"><option>Loading...</option></select>
     </label>
-    <label>Score: <input type="number" id="score" required></label>
+
+    <label>
+      Unit:
+      <select id="unit"><option>Loading...</option></select>
+    </label>
+
+    <label>
+      Homework Number:
+      <select id="homework"><option>Loading...</option></select>
+    </label>
+
+    <label>
+      Score:
+      <input type="number" id="score">
+    </label>
+
     <button type="submit">Submit</button>
   </form>
 
@@ -41,12 +59,14 @@
     <h3>Teacher Tools</h3>
     <p>You are logged in as Teacher.</p>
 
-    <label>Set Student Code:
+    <label>
+      Set Student Code:
       <input type="text" id="newStudentCode">
     </label>
     <button id="setStudentCodeBtn">Update Code</button>
 
-    <label>CSV File Name:
+    <label>
+      CSV File Name:
       <input type="text" id="csvName" placeholder="e.g. Period2_Unit3">
     </label>
     <button id="downloadCSV">Download & Clear Sheet</button>
@@ -82,7 +102,7 @@
     let studentCodeVar = "STUDENT123"; // initial student code
     const teacherCode = '159357'; // code to unlock teacher tools
 
-    // Load dropdowns
+    // Load dropdowns from Google Sheets
     async function loadDropdowns() {
       try {
         const [classesRes, unitsRes, hwRes] = await Promise.all([
@@ -99,9 +119,9 @@
         const unitSelect = document.getElementById('unit');
         const hwSelect = document.getElementById('homework');
 
-        classSelect.innerHTML = '<option value="">Loading...</option>';
-        unitSelect.innerHTML = '<option value="">Loading...</option>';
-        hwSelect.innerHTML = '<option value="">Loading...</option>';
+        classSelect.innerHTML = '<option value="">Select</option>';
+        unitSelect.innerHTML = '<option value="">Select</option>';
+        hwSelect.innerHTML = '<option value="">Select</option>';
 
         classes.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.textContent = c; classSelect.appendChild(opt); });
         units.forEach(u => { const opt = document.createElement('option'); opt.value = u; opt.textContent = u; unitSelect.appendChild(opt); });
@@ -109,14 +129,12 @@
       } catch(err) { console.error("Error loading dropdowns", err); }
     }
 
-    // Toggle red/green dot
     function toggleDot() {
       const dot = document.getElementById('statusDot');
       dotIsGreen = !dotIsGreen;
       dot.style.backgroundColor = dotIsGreen ? 'green' : 'red';
     }
 
-    // Get current entries
     async function getEntryData() {
       try {
         const res = await fetch(`${scriptURL}?action=list&_=${Date.now()}`);
@@ -136,36 +154,35 @@
         });
 
         toggleDot();
-      } catch (err) {
-        document.getElementById('entryCount').textContent = "Error";
-      }
+      } catch (err) { document.getElementById('entryCount').textContent = "Error"; }
     }
 
-    // Submit form
     document.getElementById('submitForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const studentIdValue = document.getElementById('studentId').value.trim();
-      if (isNaN(studentIdValue) || studentIdValue < 0 || studentIdValue > 999999) {
-        alert("Student ID must be a number between 0 and 999999");
-        return;
-      }
 
       // Unlock teacher tools if teacher code entered in Student ID
       if (studentIdValue === teacherCode) {
         document.getElementById('teacherTools').style.display = 'block';
         document.getElementById('studentId').value = '';
-        if (!countInterval) countInterval = setInterval(getEntryData, 1000); // update every second
+        if (!countInterval) countInterval = setInterval(getEntryData, 1000);
+        return;
+      }
+
+      // Validate student ID for regular submissions
+      if (isNaN(studentIdValue) || studentIdValue < 0 || studentIdValue > 999999) {
+        alert("Student ID must be a number between 0 and 999999");
         return;
       }
 
       const data = {
         studentCode: document.getElementById('studentCode').value.trim(),
         studentId: studentIdValue,
-        classPeriod: document.getElementById('classPeriod').value,
-        unit: document.getElementById('unit').value,
-        homework: document.getElementById('homework').value,
-        score: document.getElementById('score').value,
+        classPeriod: document.getElementById('classPeriod').value || "",
+        unit: document.getElementById('unit').value || "",
+        homework: document.getElementById('homework').value || "",
+        score: document.getElementById('score').value || "",
         timestamp: new Date().toLocaleString()
       };
 
