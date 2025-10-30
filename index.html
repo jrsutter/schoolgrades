@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <title>Homework Submission</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 650px; margin: 2rem auto; padding: 0 1rem; }
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
     label { display: block; margin-top: 1rem; }
+    input, select { padding: 0.4rem; margin-top: 0.2rem; width: 100%; }
     button { margin-top: 1rem; padding: 0.4rem 0.8rem; cursor: pointer; }
     #teacherTools { display: none; margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 1rem; }
     .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: red; margin-left: 8px; vertical-align: middle; transition: background-color 0.3s ease; }
@@ -19,21 +20,16 @@
   <h2>Homework Submission</h2>
 
   <form id="submitForm">
-    <label>Student ID: <input type="text" id="studentId" required></label>
+    <label>Student Code: <input type="text" id="studentCode" required></label>
+    <label>Student ID: <input type="number" id="studentId" min="0" max="999999" required></label>
     <label>Class:
-      <select id="classPeriod" required>
-        <option>Loading...</option>
-      </select>
+      <select id="classPeriod" required><option>Loading...</option></select>
     </label>
     <label>Unit:
-      <select id="unit" required>
-        <option>Loading...</option>
-      </select>
+      <select id="unit" required><option>Loading...</option></select>
     </label>
     <label>Homework Number:
-      <select id="homework" required>
-        <option>Loading...</option>
-      </select>
+      <select id="homework" required><option>Loading...</option></select>
     </label>
     <label>Score: <input type="number" id="score" required></label>
     <button type="submit">Submit</button>
@@ -44,6 +40,11 @@
   <div id="teacherTools">
     <h3>Teacher Tools</h3>
     <p>You are logged in as Teacher.</p>
+
+    <label>Set Student Code:
+      <input type="text" id="newStudentCode">
+    </label>
+    <button id="setStudentCodeBtn">Update Code</button>
 
     <label>CSV File Name:
       <input type="text" id="csvName" placeholder="e.g. Period2_Unit3">
@@ -75,11 +76,13 @@
   </div>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbwJmZVboBgWdqo1-Fg4ALkwiy-e_ZrtyqQVIGLUnu8NUJ4MrssAVhKeYukeqcs4C88V3A/exec"; // Replace with your Web App URL
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzWOE5Xie1A8C88rYY2hLZUAWpdXY2QPZ_9QhlpG6TrmpcudgqqogD0zGR7axVHGYeUKw/exec"; // Replace with your Web App URL
     let countInterval = null;
     let dotIsGreen = false;
-    const teacherCode = '159357'; // Teacher access code
+    let studentCodeVar = "STUDENT123"; // initial student code
+    const teacherCode = '159357'; // code to unlock teacher tools
 
+    // Load dropdowns
     async function loadDropdowns() {
       try {
         const [classesRes, unitsRes, hwRes] = await Promise.all([
@@ -96,24 +99,24 @@
         const unitSelect = document.getElementById('unit');
         const hwSelect = document.getElementById('homework');
 
-        classSelect.innerHTML = '<option value="">Select</option>';
-        unitSelect.innerHTML = '<option value="">Select</option>';
-        hwSelect.innerHTML = '<option value="">Select</option>';
+        classSelect.innerHTML = '<option value="">Loading...</option>';
+        unitSelect.innerHTML = '<option value="">Loading...</option>';
+        hwSelect.innerHTML = '<option value="">Loading...</option>';
 
         classes.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.textContent = c; classSelect.appendChild(opt); });
         units.forEach(u => { const opt = document.createElement('option'); opt.value = u; opt.textContent = u; unitSelect.appendChild(opt); });
         homeworks.forEach(h => { const opt = document.createElement('option'); opt.value = h; opt.textContent = h; hwSelect.appendChild(opt); });
-      } catch(err) {
-        console.error("Error loading dropdowns", err);
-      }
+      } catch(err) { console.error("Error loading dropdowns", err); }
     }
 
+    // Toggle red/green dot
     function toggleDot() {
       const dot = document.getElementById('statusDot');
       dotIsGreen = !dotIsGreen;
       dot.style.backgroundColor = dotIsGreen ? 'green' : 'red';
     }
 
+    // Get current entries
     async function getEntryData() {
       try {
         const res = await fetch(`${scriptURL}?action=list&_=${Date.now()}`);
@@ -138,19 +141,26 @@
       }
     }
 
+    // Submit form
     document.getElementById('submitForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const studentIdValue = document.getElementById('studentId').value.trim();
 
-      // Unlock teacher tools if teacher code is entered
+      const studentIdValue = document.getElementById('studentId').value.trim();
+      if (isNaN(studentIdValue) || studentIdValue < 0 || studentIdValue > 999999) {
+        alert("Student ID must be a number between 0 and 999999");
+        return;
+      }
+
+      // Unlock teacher tools if teacher code entered in Student ID
       if (studentIdValue === teacherCode) {
         document.getElementById('teacherTools').style.display = 'block';
         document.getElementById('studentId').value = '';
-        if (!countInterval) countInterval = setInterval(getEntryData, 500);
-        return; // Do not submit teacher code as a student entry
+        if (!countInterval) countInterval = setInterval(getEntryData, 1000); // update every second
+        return;
       }
 
       const data = {
+        studentCode: document.getElementById('studentCode').value.trim(),
         studentId: studentIdValue,
         classPeriod: document.getElementById('classPeriod').value,
         unit: document.getElementById('unit').value,
@@ -168,12 +178,28 @@
       }
     });
 
+    // Teacher updates student code
+    document.getElementById('setStudentCodeBtn').addEventListener('click', async () => {
+      const newCode = document.getElementById('newStudentCode').value.trim();
+      if (!newCode) { alert("Enter a valid code"); return; }
+      try {
+        studentCodeVar = newCode;
+        await fetch(scriptURL, {
+          method: 'POST',
+          body: JSON.stringify({ action: "setStudentCode", teacherCode, newStudentCode: newCode })
+        });
+        alert("Student code updated!");
+        document.getElementById('newStudentCode').value = '';
+      } catch (err) { alert("Error updating student code"); }
+    });
+
+    // CSV download
     document.getElementById('downloadCSV').addEventListener('click', () => {
       const name = document.getElementById('csvName').value.trim() || 'class_data';
       const filename = encodeURIComponent(name + '.csv');
       const downloadURL = `${scriptURL}?action=download&filename=${filename}`;
       window.open(downloadURL, '_blank');
-      setTimeout(getEntryData, 3000);
+      setTimeout(getEntryData, 1000);
     });
 
     window.addEventListener('DOMContentLoaded', loadDropdowns);
