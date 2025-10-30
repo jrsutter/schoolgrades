@@ -6,7 +6,7 @@
   <style>
     body { font-family: Arial, sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
     label { display: block; margin-top: 1rem; }
-    input, select { padding: 0.4rem; margin-top: 0.2rem; width: 100%; }
+    input, select { padding: 0.4rem; margin-top: 0.2rem; width: 50%; max-width: 300px; }
     button { margin-top: 1rem; padding: 0.4rem 0.8rem; cursor: pointer; }
     #teacherTools { display: none; margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 1rem; }
     .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: red; margin-left: 8px; vertical-align: middle; transition: background-color 0.3s ease; }
@@ -58,6 +58,7 @@
   <div id="teacherTools">
     <h3>Teacher Tools</h3>
     <p>You are logged in as Teacher.</p>
+    <p>Current Student Code: <span id="currentStudentCode">STUDENT123</span></p>
 
     <label>
       Set Student Code:
@@ -102,7 +103,6 @@
     let studentCodeVar = "STUDENT123"; // initial student code
     const teacherCode = '159357'; // code to unlock teacher tools
 
-    // Load dropdowns from Google Sheets
     async function loadDropdowns() {
       try {
         const [classesRes, unitsRes, hwRes] = await Promise.all([
@@ -162,15 +162,16 @@
 
       const studentIdValue = document.getElementById('studentId').value.trim();
 
-      // Unlock teacher tools if teacher code entered in Student ID
+      // Teacher login check
       if (studentIdValue === teacherCode) {
         document.getElementById('teacherTools').style.display = 'block';
         document.getElementById('studentId').value = '';
+        document.getElementById('currentStudentCode').textContent = studentCodeVar;
         if (!countInterval) countInterval = setInterval(getEntryData, 1000);
         return;
       }
 
-      // Validate student ID for regular submissions
+      // Validate student ID
       if (isNaN(studentIdValue) || studentIdValue < 0 || studentIdValue > 999999) {
         alert("Student ID must be a number between 0 and 999999");
         return;
@@ -195,7 +196,7 @@
       }
     });
 
-    // Teacher updates student code
+    // Update student code in teacher tools
     document.getElementById('setStudentCodeBtn').addEventListener('click', async () => {
       const newCode = document.getElementById('newStudentCode').value.trim();
       if (!newCode) { alert("Enter a valid code"); return; }
@@ -205,6 +206,7 @@
           method: 'POST',
           body: JSON.stringify({ action: "setStudentCode", teacherCode, newStudentCode: newCode })
         });
+        document.getElementById('currentStudentCode').textContent = studentCodeVar;
         alert("Student code updated!");
         document.getElementById('newStudentCode').value = '';
       } catch (err) { alert("Error updating student code"); }
