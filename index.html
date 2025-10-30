@@ -4,43 +4,15 @@
   <meta charset="UTF-8">
   <title>Homework Submission</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 650px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
+    body { font-family: Arial, sans-serif; max-width: 650px; margin: 2rem auto; padding: 0 1rem; }
     label { display: block; margin-top: 1rem; }
     button { margin-top: 1rem; padding: 0.4rem 0.8rem; cursor: pointer; }
     #teacherTools { display: none; margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 1rem; }
-    .status-dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background-color: red;
-      margin-left: 8px;
-      vertical-align: middle;
-      transition: background-color 0.3s ease;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 6px;
-      text-align: center;
-      font-size: 0.9rem;
-    }
+    .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: red; margin-left: 8px; vertical-align: middle; transition: background-color 0.3s ease; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; font-size: 0.9rem; }
     th { background: #f4f4f4; }
-    #entriesTableContainer {
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-      margin-top: 1rem;
-    }
+    #entriesTableContainer { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; margin-top: 1rem; }
   </style>
 </head>
 <body>
@@ -50,17 +22,17 @@
     <label>Student ID: <input type="text" id="studentId" required></label>
     <label>Class:
       <select id="classPeriod" required>
-        <option value="">Select</option>
+        <option>Loading...</option>
       </select>
     </label>
     <label>Unit:
       <select id="unit" required>
-        <option value="">Select</option>
+        <option>Loading...</option>
       </select>
     </label>
     <label>Homework Number:
       <select id="homework" required>
-        <option value="">Select</option>
+        <option>Loading...</option>
       </select>
     </label>
     <label>Score: <input type="number" id="score" required></label>
@@ -68,11 +40,6 @@
   </form>
 
   <p id="message"></p>
-
-  <hr>
-  <h3>Teacher Access</h3>
-  <input type="password" id="teacherId" placeholder="Enter Teacher Code">
-  <button id="checkTeacher">Enter</button>
 
   <div id="teacherTools">
     <h3>Teacher Tools</h3>
@@ -108,9 +75,10 @@
   </div>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbwJmZVboBgWdqo1-Fg4ALkwiy-e_ZrtyqQVIGLUnu8NUJ4MrssAVhKeYukeqcs4C88V3A/exec"; // replace with your Web App URL
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwJmZVboBgWdqo1-Fg4ALkwiy-e_ZrtyqQVIGLUnu8NUJ4MrssAVhKeYukeqcs4C88V3A/exec"; // Replace with your Web App URL
     let countInterval = null;
     let dotIsGreen = false;
+    const teacherCode = '159357'; // Teacher access code
 
     async function loadDropdowns() {
       try {
@@ -132,11 +100,10 @@
         unitSelect.innerHTML = '<option value="">Select</option>';
         hwSelect.innerHTML = '<option value="">Select</option>';
 
-        classes.forEach(c => { const opt = document.createElement('option'); opt.textContent = c; classSelect.appendChild(opt); });
-        units.forEach(u => { const opt = document.createElement('option'); opt.textContent = u; unitSelect.appendChild(opt); });
-        homeworks.forEach(h => { const opt = document.createElement('option'); opt.textContent = h; hwSelect.appendChild(opt); });
-
-      } catch (err) {
+        classes.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.textContent = c; classSelect.appendChild(opt); });
+        units.forEach(u => { const opt = document.createElement('option'); opt.value = u; opt.textContent = u; unitSelect.appendChild(opt); });
+        homeworks.forEach(h => { const opt = document.createElement('option'); opt.value = h; opt.textContent = h; hwSelect.appendChild(opt); });
+      } catch(err) {
         console.error("Error loading dropdowns", err);
       }
     }
@@ -173,34 +140,31 @@
 
     document.getElementById('submitForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const studentIdValue = document.getElementById('studentId').value.trim();
+
+      // Unlock teacher tools if teacher code is entered
+      if (studentIdValue === teacherCode) {
+        document.getElementById('teacherTools').style.display = 'block';
+        document.getElementById('studentId').value = '';
+        if (!countInterval) countInterval = setInterval(getEntryData, 1000);
+        return; // Do not submit teacher code as a student entry
+      }
+
       const data = {
-        studentId: document.getElementById('studentId').value,
+        studentId: studentIdValue,
         classPeriod: document.getElementById('classPeriod').value,
         unit: document.getElementById('unit').value,
         homework: document.getElementById('homework').value,
         score: document.getElementById('score').value,
         timestamp: new Date().toLocaleString()
       };
+
       try {
         await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) });
         document.getElementById('message').textContent = '✅ Submission received!';
         e.target.reset();
       } catch {
         document.getElementById('message').textContent = '⚠️ Error submitting data.';
-      }
-    });
-
-    document.getElementById('checkTeacher').addEventListener('click', () => {
-      const enteredId = document.getElementById('teacherId').value.trim();
-      if (enteredId === '159357') {
-        document.getElementById('teacherTools').style.display = 'block';
-        document.getElementById('teacherId').value = '';
-        document.getElementById('checkTeacher').disabled = true;
-        document.getElementById('teacherId').style.display = 'none';
-        getEntryData();
-        countInterval = setInterval(getEntryData, 3000);
-      } else {
-        alert('Invalid Teacher Code.');
       }
     });
 
@@ -216,4 +180,3 @@
   </script>
 </body>
 </html>
-
