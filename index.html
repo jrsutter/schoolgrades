@@ -146,7 +146,7 @@
       if (studentIdValue === teacherCode) {
         document.getElementById('teacherTools').style.display = 'block';
         document.getElementById('studentId').value = '';
-        if (!countInterval) countInterval = setInterval(getEntryData, 1000);
+        if (!countInterval) countInterval = setInterval(getEntryData, 500);
         return; // Do not submit teacher code as a student entry
       }
 
