@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
+      max-width: 650px;
       margin: 2rem auto;
       padding: 0 1rem;
     }
@@ -48,20 +48,19 @@
 
   <form id="submitForm">
     <label>Student ID: <input type="text" id="studentId" required></label>
+    <label>Class:
+      <select id="classPeriod" required>
+        <option value="">Select</option>
+      </select>
+    </label>
     <label>Unit:
       <select id="unit" required>
         <option value="">Select</option>
-        <option>Unit 1</option>
-        <option>Unit 2</option>
-        <option>Unit 3</option>
       </select>
     </label>
     <label>Homework Number:
       <select id="homework" required>
         <option value="">Select</option>
-        <option>Homework 1</option>
-        <option>Homework 2</option>
-        <option>Homework 3</option>
       </select>
     </label>
     <label>Score: <input type="number" id="score" required></label>
@@ -96,6 +95,7 @@
         <thead>
           <tr>
             <th>Student ID</th>
+            <th>Class</th>
             <th>Unit</th>
             <th>Homework</th>
             <th>Score</th>
@@ -108,9 +108,38 @@
   </div>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbwJmZVboBgWdqo1-Fg4ALkwiy-e_ZrtyqQVIGLUnu8NUJ4MrssAVhKeYukeqcs4C88V3A/exec"; // Replace with your deployed Apps Script URL
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxOT_0xRyzq5RhLXFCEdF8hlq3dq9H2ykX_znPcIX6h1-n6322jk1-4DNwxa-4gwi7jdQ/exec"; // replace with your Web App URL
     let countInterval = null;
     let dotIsGreen = false;
+
+    async function loadDropdowns() {
+      try {
+        const [classesRes, unitsRes, hwRes] = await Promise.all([
+          fetch(`${scriptURL}?action=classes`),
+          fetch(`${scriptURL}?action=units`),
+          fetch(`${scriptURL}?action=homeworks`)
+        ]);
+
+        const classes = await classesRes.json();
+        const units = await unitsRes.json();
+        const homeworks = await hwRes.json();
+
+        const classSelect = document.getElementById('classPeriod');
+        const unitSelect = document.getElementById('unit');
+        const hwSelect = document.getElementById('homework');
+
+        classSelect.innerHTML = '<option value="">Select</option>';
+        unitSelect.innerHTML = '<option value="">Select</option>';
+        hwSelect.innerHTML = '<option value="">Select</option>';
+
+        classes.forEach(c => { const opt = document.createElement('option'); opt.textContent = c; classSelect.appendChild(opt); });
+        units.forEach(u => { const opt = document.createElement('option'); opt.textContent = u; unitSelect.appendChild(opt); });
+        homeworks.forEach(h => { const opt = document.createElement('option'); opt.textContent = h; hwSelect.appendChild(opt); });
+
+      } catch (err) {
+        console.error("Error loading dropdowns", err);
+      }
+    }
 
     function toggleDot() {
       const dot = document.getElementById('statusDot');
@@ -146,6 +175,7 @@
       e.preventDefault();
       const data = {
         studentId: document.getElementById('studentId').value,
+        classPeriod: document.getElementById('classPeriod').value,
         unit: document.getElementById('unit').value,
         homework: document.getElementById('homework').value,
         score: document.getElementById('score').value,
@@ -168,7 +198,7 @@
         document.getElementById('checkTeacher').disabled = true;
         document.getElementById('teacherId').style.display = 'none';
         getEntryData();
-        countInterval = setInterval(getEntryData, 3000); // auto update every 3 sec
+        countInterval = setInterval(getEntryData, 3000);
       } else {
         alert('Invalid Teacher Code.');
       }
@@ -181,7 +211,8 @@
       window.open(downloadURL, '_blank');
       setTimeout(getEntryData, 3000);
     });
+
+    window.addEventListener('DOMContentLoaded', loadDropdowns);
   </script>
 </body>
 </html>
-
