@@ -89,7 +89,8 @@
     <h2>Submit Your Score</h2>
 
     <label for="studentId">Student ID</label>
-    <input type="number" id="studentId" placeholder="6-digit ID" min="0" max="999999">
+    <input type="number" id="studentId" placeholder="6-digit ID" min="0" max="999999"
+       oninput="if(this.value.length>6) this.value=this.value.slice(0,6)">
 
     <label for="class">Class</label>
     <select id="class">
@@ -209,3 +210,4 @@
   </script>
 </body>
 </html>
+
