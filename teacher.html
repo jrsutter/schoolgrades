@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Teacher Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+<style>
+body { font-family:'Roboto', sans-serif; max-width:700px; margin:2rem auto; padding:0 1rem; }
+input, button { margin-top:0.5rem; padding:0.5rem; width:50%; max-width:250px; }
+button { background:#4CAF50; color:white; border:none; border-radius:5px; cursor:pointer; transition: background 0.3s; }
+button:hover { background:#45a049; }
+table { width:100%; border-collapse:collapse; margin-top:1rem; table-layout:fixed; }
+thead { position: sticky; top:0; background:#ddd; z-index:1; }
+th, td { border:1px solid #ccc; padding:5px; text-align:center; }
+tbody tr:nth-child(odd) { background:#f9f9f9; }
+tbody tr:nth-child(even) { background:#ffffff; }
+#updateDot { display:inline-block; width:25px; height:25px; border-radius:50%; background:red; margin-left:5px; transition: box-shadow 0.3s; }
+</style>
+</head>
+<body>
+
+<h2>Teacher Tools</h2>
+
+<p>Current Student Code: <span id="currentCode">Loading...</span></p>
+
+<label>Set New Student Code: <input type="text" id="newStudentCode"></label>
+<button id="setCodeBtn">Update Code</button><br>
+
+<label>CSV File Name: <input type="text" id="csvName" placeholder="e.g. Period2_Unit3"></label>
+<button id="downloadCSV">Download CSV & Clear Sheet</button>
+
+<p>Live Update: <span id="updateDot"></span></p>
+
+<h3>Current Submissions</h3>
+<p>Entries: <span id="entryCount">0</span></p>
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>First Name</th><th>Last Name</th><th>Class</th><th>Score</th><th>Timestamp</th></tr>
+  </thead>
+  <tbody id="entriesBody"></tbody>
+</table>
+
+<script>
+const scriptURL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_URL"; // Replace with your Apps Script Web App URL
+
+// Update current student code
+async function updateCurrentCode(){
+  try{
+    const res = await fetch(`${scriptURL}?action=getStudentCode&_=${Date.now()}`);
+    const code = await res.text();
+    document.getElementById('currentCode').textContent = code;
+  } catch(e){ console.error(e); }
+}
+setInterval(updateCurrentCode,2000); updateCurrentCode();
+
+// Fetch and display entries
+async function getEntries(){
+  try{
+    const res = await fetch(`${scriptURL}?action=list&_=${Date.now()}`);
+    const data = await res.json();
+    const tbody = document.getElementById('entriesBody');
+    tbody.innerHTML='';
+    data.forEach(row=>{
+      const tr=document.createElement('tr');
+      row.forEach(cell=>{
+        const td=document.createElement('td');
+        td.textContent=cell;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    document.getElementById('entryCount').textContent = data.length;
+  } catch(e){ console.error(e); }
+}
+setInterval(getEntries,500); getEntries();
+
+// Dot toggle
+let dotColor=false;
+setInterval(()=>{
+  dotColor=!dotColor;
+  const dot=document.getElementById('updateDot');
+  dot.style.background=dotColor?'green':'red';
+  dot.style.boxShadow=dotColor?'0 0 15px limegreen':'';
+},500);
+
+// Update student code
+document.getElementById('setCodeBtn').addEventListener('click', async ()=>{
+  const newCode=document.getElementById('newStudentCode').value.trim();
+  if(!newCode) return alert("Enter a valid code");
+  await fetch(scriptURL,{method:'POST',body: JSON.stringify({action:'setStudentCode', teacherCode:'159357', newCode})});
+  alert('Student code updated');
+});
+
+// Download CSV & clear sheet
+document.getElementById('downloadCSV').addEventListener('click', ()=>{
+  const filenameInput=document.getElementById('csvName');
+  const filename=filenameInput && filenameInput.value.trim()? filenameInput.value.trim()+'.csv':'grades.csv';
+  window.open(`${scriptURL}?action=download&filename=${encodeURIComponent(filename)}`,'_blank');
+});
+</script>
+
+</body>
+</html>
