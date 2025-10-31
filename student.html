@@ -81,14 +81,16 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvS
 
 // -------------------- Landing Page --------------------
 async function verifyCode() {
-  const code = document.getElementById("studentCodeInput").value.trim();
-  if (!code) return alert("Enter student code");
+  let inputCode = document.getElementById("studentCodeInput").value || "";
+  inputCode = inputCode.trim().replace(/\s/g, '').toUpperCase(); // remove spaces and normalize
+
+  if (!inputCode) return alert("Enter student code");
 
   try {
-    const res = await fetch(`${SCRIPT_URL}?action=verifyCode&code=${encodeURIComponent(code)}`);
+    const res = await fetch(`${SCRIPT_URL}?action=verifyCode&code=${encodeURIComponent(inputCode)}`);
     const data = await res.json();
 
-    console.log("Server response:", data); // Debug output
+    console.log("Server response:", data); // debug
 
     if (data.valid) {
       document.getElementById("landingPage").style.display = "none";
@@ -126,9 +128,12 @@ async function loadClasses() {
 
 // -------------------- Submit Grade --------------------
 async function submitGrade() {
-  const studentId = document.getElementById("studentIdInput").value.trim();
+  let studentId = document.getElementById("studentIdInput").value.trim();
   const cls = document.getElementById("classSelect").value;
-  const grade = document.getElementById("gradeInput").value.trim();
+  let grade = document.getElementById("gradeInput").value.trim();
+
+  studentId = studentId.replace(/\s/g, '');
+  grade = grade.replace(/\s/g, '');
 
   if (!studentId) return alert("Enter Student ID");
   if (studentId.length > 6) return alert("Student ID cannot exceed 6 digits");
@@ -143,7 +148,6 @@ async function submitGrade() {
 
     if (data.status === "success") {
       document.getElementById("successMsg").textContent = "Grade submitted!";
-      // Clear inputs for next entry
       document.getElementById("studentIdInput").value = "";
       document.getElementById("gradeInput").value = "";
     } else {
