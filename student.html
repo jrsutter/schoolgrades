@@ -75,14 +75,18 @@
       70% {opacity: 1;}
       100% {opacity: 0;}
     }
+    #mainForm { display: none; } /* hide main form until code entered */
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Submit Your Score</h2>
-
-    <label for="studentCode">Student Code</label>
+  <div class="card" id="landingCard">
+    <h2>Enter Student Code</h2>
     <input type="text" id="studentCode" placeholder="Enter code" maxlength="6">
+    <button onclick="verifyCode()">Continue</button>
+  </div>
+
+  <div class="card" id="mainForm">
+    <h2>Submit Your Score</h2>
 
     <label for="studentId">Student ID</label>
     <input type="number" id="studentId" placeholder="6-digit ID" min="0" max="999999">
@@ -100,7 +104,36 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwnBgUmBYfKnGEZk0Wvo0DvI9kolxuNUqWEFoSAGmCBkZMYD33yKce_cYw7nJlEMH_6Og/execE"; // replace this with your Apps Script web app URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwnBgUmBYfKnGEZk0Wvo0DvI9kolxuNUqWEFoSAGmCBkZMYD33yKce_cYw7nJlEMH_6Og/exec"; // replace with your Apps Script web app URL
+    let enteredCode = "";
+
+    async function verifyCode() {
+      const input = document.getElementById("studentCode").value.trim();
+      if (!input) {
+        alert("Please enter the student code.");
+        return;
+      }
+
+      // Check against the current student code from the sheet
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getStudentCode`);
+        const data = await res.json();
+        if (input === data.code) {
+          // Teacher code entered — redirect or show teacher page
+          alert("Teacher access granted!");
+          // Here you could redirect or show teacher-specific UI
+        } else {
+          // Proceed to main student form
+          enteredCode = input;
+          document.getElementById("landingCard").style.display = "none";
+          document.getElementById("mainForm").style.display = "block";
+          loadClasses();
+        }
+      } catch(err) {
+        console.error(err);
+        alert("Error verifying code.");
+      }
+    }
 
     async function loadClasses() {
       try {
@@ -123,7 +156,7 @@
             classSelect.add(opt);
           });
         }
-      } catch (err) {
+      } catch(err) {
         console.error("Error loading classes:", err);
         const classSelect = document.getElementById("class");
         classSelect.innerHTML = "<option>Error loading</option>";
@@ -131,7 +164,6 @@
     }
 
     async function submitForm() {
-      const studentCode = document.getElementById("studentCode").value.trim();
       const studentId = document.getElementById("studentId").value.trim();
       const studentClass = document.getElementById("class").value;
       const score = document.getElementById("score").value.trim();
@@ -143,7 +175,7 @@
       }
 
       const body = {
-        studentCode,
+        studentCode: enteredCode,
         studentId,
         class: studentClass,
         score
@@ -163,7 +195,7 @@
         } else {
           alert("Submission failed. Try again.");
         }
-      } catch (err) {
+      } catch(err) {
         console.error("Error submitting:", err);
         alert("Network error. Please try again.");
       }
@@ -174,8 +206,6 @@
       document.getElementById("class").selectedIndex = 0;
       document.getElementById("score").value = "";
     }
-
-    window.onload = loadClasses;
   </script>
 </body>
 </html>
