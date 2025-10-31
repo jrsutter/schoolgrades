@@ -214,15 +214,21 @@ async function loadGrades() {
 // Download CSV
 function downloadCSV() {
   const filename = document.getElementById("csvNameInput")?.value.trim() || "grades.csv";
+  const url = `${SCRIPT_URL}?action=downloadCSV`;
 
-  // Open CSV in a new tab
-  const link = document.createElement("a");
-  link.href = `${SCRIPT_URL}?action=downloadCSV`;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  // Create a hidden link
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename; // this sets the filename
+  document.body.appendChild(a);
+
+  // Programmatically click the link to trigger download
+  a.click();
+
+  // Remove the link
+  document.body.removeChild(a);
 }
+
 
 
 // Clear grades
