@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Student Submission</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Roboto', sans-serif; max-width:600px; margin:2rem auto; padding:0 1rem; }
+input, select, button { margin-top:0.5rem; padding:0.5rem; width:50%; max-width:250px; }
+button { background:#4CAF50; color:white; border:none; border-radius:5px; cursor:pointer; transition: background 0.3s; }
+button:hover { background:#45a049; }
+.card { background:#f9f9f9; padding:1rem; margin:1rem 0; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+#formDiv { display:none; opacity:0; transition: opacity 0.5s ease; }
+#formDiv.show { display:block; opacity:1; }
+#successMsg { color:green; font-weight:bold; margin-top:0.5rem; display:none; }
+</style>
+</head>
+<body>
+
+<h2>Enter Student Code</h2>
+<div class="card">
+  <input type="text" id="studentCodeInput" placeholder="Enter code">
+  <button id="verifyCode">Submit</button>
+  <p id="msg"></p>
+</div>
+
+<div id="formDiv" class="card">
+  <h3>Submit Score</h3>
+  <label>Student ID: <input type="number" id="studentId" min="0" max="999999"></label><br>
+  <label>Class: 
+    <select id="classSelect"><option>Loading...</option></select>
+  </label><br>
+  <label>Score: <input type="number" id="score"></label><br>
+  <button id="submitScore">Submit</button>
+  <p id="formMsg"></p>
+  <p id="successMsg">✅ Submitted successfully!</p>
+</div>
+
+<script>
+const scriptURL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_URL"; // replace with your URL
+
+// Load classes dynamically
+async function loadClasses() {
+  try {
+    const res = await fetch(`${scriptURL}?action=classes`);
+    const classes = await res.json();
+    const sel = document.getElementById('classSelect');
+    sel.innerHTML = '<option value="">Select</option>';
+    classes.forEach(c => sel.appendChild(new Option(c, c)));
+  } catch(e){ console.error(e); }
+}
+
+// Verify student code
+document.getElementById('verifyCode').addEventListener('click', () => {
+  const code = document.getElementById('studentCodeInput').value.trim();
+  if(!code){ document.getElementById('msg').textContent="Enter code"; return; }
+  if(code==="159357"){ window.location.href="teacher.html"; return; }
+  document.getElementById('formDiv').classList.add('show');
+  document.getElementById('msg').textContent="";
+});
+
+// Submit score
+document.getElementById('submitScore').addEventListener('click', async () => {
+  const studentId = document.getElementById('studentId').value.trim();
+  const studentCode = document.getElementById('studentCodeInput').value.trim();
+  const classValue = document.getElementById('classSelect').value;
+  const score = document.getElementById('score').value;
+
+  if(!studentId){ document.getElementById('formMsg').textContent="Enter Student ID"; return; }
+
+  const data = {
+    action: "submitScore",
+    studentCode: studentCode,
+    studentId: studentId,
+    class: classValue,
+    score: score
+  };
+
+  try {
+    const res = await fetch(scriptURL, { method:'POST', body: JSON.stringify(data) });
+    const txt = await res.text();
+    if(txt==="Success"){
+      document.getElementById('successMsg').style.display='block';
+      document.getElementById('formMsg').textContent='';
+      // Clear fields for next entry
+      document.getElementById('studentId').value='';
+      document.getElementById('score').value='';
+      document.getElementById('classSelect').selectedIndex = 0;
+      setTimeout(()=>{ document.getElementById('successMsg').style.display='none'; },1500);
+    } else {
+      document.getElementById('formMsg').textContent=txt;
+    }
+  } catch(e){ document.getElementById('formMsg').textContent="Error submitting."; console.error(e); }
+});
+
+loadClasses();
+</script>
+
+</body>
+</html>
