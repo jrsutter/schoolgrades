@@ -6,30 +6,34 @@
 <title>Student Grade Submission</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <style>
-body { font-family:'Roboto',sans-serif; background:#f3f4f6; margin:0; padding:20px; }
-h2 { text-align:center; color:#333; }
-.card { background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); max-width:500px; margin:20px auto; }
-.card input { width:calc(100% - 16px); padding:8px; margin:6px 0; border-radius:6px; border:1px solid #ccc; }
-.card button { background:#007bff; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; margin-top:10px; }
-.card button:hover { background:#0056b3; }
-.success { color:green; font-weight:500; margin-top:10px; }
+  body { font-family: 'Roboto', sans-serif; background: #f3f4f6; margin: 0; padding: 20px; }
+  h2 { text-align: center; color: #333; }
+  .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 500px; margin: 20px auto; }
+  .card input { width: calc(100% - 16px); padding: 8px; margin: 6px 0; border-radius: 6px; border: 1px solid #ccc; }
+  .card button { background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+  .card button:hover { background: #0056b3; }
+  .success { color: green; font-weight: 500; margin-top: 10px; }
 </style>
 </head>
 <body>
 
 <h2>Submit Your Grade</h2>
 
+<!-- Landing page -->
 <div id="landingPage" class="card">
   <label>Enter Student Code:</label>
-  <input type="text" id="studentCodeInput" maxlength="20" placeholder="Enter code">
+  <input type="text" id="studentCodeInput" maxlength="6" placeholder="Enter code">
   <button onclick="verifyCode()">Continue</button>
 </div>
 
+<!-- Main submission page -->
 <div id="mainPage" class="card" style="display:none;">
-  <label>Student ID (up to 6 digits):</label>
-  <input type="text" id="studentIdInput" maxlength="6" placeholder="123456">
-  <label>Grade (0-100):</label>
+  <label>Student ID (6 digits):</label>
+  <input type="number" id="studentIdInput" min="0" max="999999" placeholder="123456">
+
+  <label>Grade:</label>
   <input type="number" id="gradeInput" min="0" max="100" placeholder="Enter score">
+
   <button onclick="submitGrade()">Submit</button>
   <div id="successMsg" class="success"></div>
 </div>
@@ -37,19 +41,28 @@ h2 { text-align:center; color:#333; }
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec";
 
+// -------------------- Landing Page --------------------
 async function verifyCode() {
-  let inputCode = document.getElementById("studentCodeInput").value.trim().replace(/\s/g,'').toUpperCase();
-  if (!inputCode) return alert("Enter student code");
+  const code = document.getElementById("studentCodeInput").value.trim();
+  if (!code) return alert("Enter student code");
+
   try {
-    const res = await fetch(`${SCRIPT_URL}?action=verifyCode&code=${encodeURIComponent(inputCode)}`);
+    const res = await fetch(`${SCRIPT_URL}?action=verifyCode&code=${encodeURIComponent(code)}`);
     const data = await res.json();
+
     if (data.valid) {
-      document.getElementById("landingPage").style.display="none";
-      document.getElementById("mainPage").style.display="block";
-    } else alert("Invalid student code. Check with your teacher.");
-  } catch(err){console.error(err); alert("Error verifying code.");}
+      document.getElementById("landingPage").style.display = "none";
+      document.getElementById("mainPage").style.display = "block";
+    } else {
+      alert("Invalid code");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error verifying code");
+  }
 }
 
+// -------------------- Submit Grade with Countdown --------------------
 async function submitGrade() {
   const studentId = document.getElementById("studentIdInput").value.trim();
   const grade = document.getElementById("gradeInput").value.trim();
@@ -68,18 +81,19 @@ async function submitGrade() {
       method: "POST",
       body: JSON.stringify(payload)
     });
+
     const data = await res.json();
 
     if (data.status === "success") {
       const successMsg = document.getElementById("successMsg");
-      successMsg.textContent = "Grade submitted! (3)";
+      let count = 3;
+      successMsg.textContent = `Grade submitted! (${count})`;
 
-      // Clear inputs for next entry
+      // Clear inputs immediately
       document.getElementById("studentIdInput").value = "";
       document.getElementById("gradeInput").value = "";
 
-      // 3-second countdown
-      let count = 3;
+      // Start countdown
       const countdown = setInterval(() => {
         count--;
         if (count > 0) {
@@ -89,18 +103,15 @@ async function submitGrade() {
           clearInterval(countdown);
         }
       }, 1000);
-
     } else {
       alert("Failed to submit grade");
     }
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     alert("Error submitting grade");
   }
 }
-
 </script>
 
 </body>
 </html>
-
