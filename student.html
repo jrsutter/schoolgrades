@@ -24,7 +24,7 @@ h2 {
   max-width: 500px;
   margin: 20px auto;
 }
-.card input, .card select {
+.card input {
   width: calc(100% - 16px);
   padding: 8px;
   margin: 6px 0;
@@ -46,12 +46,6 @@ h2 {
   font-weight: 500;
   margin-top: 10px;
 }
-.hide-columns {
-  margin-top: 10px;
-  font-size: 0.9em;
-  cursor: pointer;
-  color: #555;
-}
 </style>
 </head>
 <body>
@@ -68,12 +62,7 @@ h2 {
 <!-- Main submission page -->
 <div id="mainPage" class="card" style="display:none;">
   <label>Student ID (6 digits):</label>
-  <input type="number" id="studentIdInput" min="0" max="999999" placeholder="123456" oninput="loadClasses()">
-
-  <label>Class:</label>
-  <select id="classSelect">
-    <option>Loading...</option>
-  </select>
+  <input type="number" id="studentIdInput" min="0" max="999999" placeholder="123456">
 
   <label>Grade:</label>
   <input type="number" id="gradeInput" min="0" max="100" placeholder="Enter score">
@@ -83,7 +72,7 @@ h2 {
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // <-- update with new web app URL
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // Replace with Apps Script URL
 
 // -------------------- Landing Page --------------------
 async function verifyCode() {
@@ -96,12 +85,9 @@ async function verifyCode() {
     const res = await fetch(`${SCRIPT_URL}?action=verifyCode&code=${encodeURIComponent(inputCode)}`);
     const data = await res.json();
 
-    console.log("Server response:", data); // debug
-
     if (data.valid) {
       document.getElementById("landingPage").style.display = "none";
       document.getElementById("mainPage").style.display = "block";
-      loadClasses();
     } else {
       alert("Invalid student code. Please check with your teacher.");
     }
@@ -111,54 +97,16 @@ async function verifyCode() {
   }
 }
 
-// -------------------- Load Classes --------------------
-async function loadClasses() {
-  try {
-    const studentId = document.getElementById("studentIdInput").value.trim();
-
-    // 1️⃣ Fetch all classes
-    const res = await fetch(`${SCRIPT_URL}?action=getClasses`);
-    const classData = await res.json();
-
-    const select = document.getElementById("classSelect");
-    select.innerHTML = "";
-    classData.forEach(cls => {
-      const option = document.createElement("option");
-      option.value = cls;
-      option.textContent = cls;
-      select.appendChild(option);
-    });
-
-    // 2️⃣ Fetch student's existing class if student ID exists
-    if (studentId) {
-      const res2 = await fetch(`${SCRIPT_URL}?action=getStudentClass&studentId=${encodeURIComponent(studentId)}`);
-      const studentClassData = await res2.json();
-      if (studentClassData.class) {
-        select.value = studentClassData.class;
-      }
-    }
-
-  } catch(err) {
-    console.error("Failed to load classes:", err);
-    const select = document.getElementById("classSelect");
-    select.innerHTML = "<option>Error loading classes</option>";
-  }
-}
-
 // -------------------- Submit Grade --------------------
 async function submitGrade() {
-  let studentId = document.getElementById("studentIdInput").value.trim();
-  const cls = document.getElementById("classSelect").value;
-  let grade = document.getElementById("gradeInput").value.trim();
-
-  studentId = studentId.replace(/\s/g,'');
-  grade = grade.replace(/\s/g,'');
+  const studentId = document.getElementById("studentIdInput").value.trim();
+  const grade = document.getElementById("gradeInput").value.trim();
 
   if (!studentId) return alert("Enter Student ID");
-  if (studentId.length > 6) return alert("Student ID cannot exceed 6 digits");
+  if (!grade) return alert("Enter a grade");
 
   try {
-    const payload = { studentId, class: cls, grade, action: "submitGrade" };
+    const payload = { action: "submitGrade", studentId, grade };
     const res = await fetch(SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify(payload)
@@ -170,10 +118,10 @@ async function submitGrade() {
       document.getElementById("studentIdInput").value = "";
       document.getElementById("gradeInput").value = "";
     } else {
-      alert("Failed to submit grade");
+      alert("Failed to submit grade: " + (data.message || ""));
     }
   } catch(err) {
-    console.error("Error submitting grade:", err);
+    console.error(err);
     alert("Error submitting grade");
   }
 }
