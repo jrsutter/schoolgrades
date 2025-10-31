@@ -214,20 +214,34 @@ async function loadGrades() {
 // Download CSV
 function downloadCSV() {
   const filename = document.getElementById("csvNameInput")?.value.trim() || "grades.csv";
-  const url = `${SCRIPT_URL}?action=downloadCSV`;
 
-  // Create a hidden link
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename; // this sets the filename
-  document.body.appendChild(a);
+  // Fetch grades JSON from Apps Script
+  fetch(`${SCRIPT_URL}?action=getGrades`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data || !data.length) return alert("No grades to download.");
 
-  // Programmatically click the link to trigger download
-  a.click();
+      // Create CSV content
+      const headers = ["Timestamp","Class","Student ID","First Name","Last Name","Score"];
+      const rows = data.map(r => [r.timestamp,r.class,r.studentId,r.firstName,r.lastName,r.score]);
+      const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
 
-  // Remove the link
-  document.body.removeChild(a);
+      // Create a blob and trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Failed to generate CSV.");
+    });
 }
+
 
 
 
