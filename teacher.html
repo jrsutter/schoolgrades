@@ -21,6 +21,8 @@ th { background:#4a90e2; color:white; position:sticky; top:0; }
 tr:nth-child(even){background:#f2f2f2;}
 tr:hover{background:#e8f0fe;}
 .entry-count { text-align:right; margin-bottom:10px; color:#555; font-weight:500; }
+.entry-count button { background:#4a90e2; color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; margin-left:10px; font-size:0.85em; }
+.entry-count button:hover { background:#357ab8; }
 </style>
 </head>
 <body>
@@ -42,12 +44,18 @@ tr:hover{background:#e8f0fe;}
 
 <div class="entry-count">
   Total Entries: <span id="entryCount">0</span>
+  <button id="toggleColumnsBtn">Hide ID & Score</button>
 </div>
 
 <table id="gradesTable">
 <thead>
 <tr>
-<th>Timestamp</th><th>Class</th><th>Student ID</th><th>First Name</th><th>Last Name</th><th>Score</th>
+<th>Timestamp</th>
+<th>Class</th>
+<th>StudentID</th>
+<th>First Name</th>
+<th>Last Name</th>
+<th>Score</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -56,58 +64,67 @@ tr:hover{background:#e8f0fe;}
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec";
-const dot=document.getElementById("updateDot");
-let dotState=false;
+const dot = document.getElementById("updateDot");
+let dotState = false;
+let columnsHidden = false;
+const toggleBtn = document.getElementById("toggleColumnsBtn");
 
+// --------------------- Fetch Student Code ---------------------
 async function fetchStudentCode(){
   try{
-    const res=await fetch(`${SCRIPT_URL}?action=getCode`);
-    const data=await res.json();
-    document.getElementById("studentCodeDisplay").textContent=data.code||"Not Set";
-  }catch(err){console.error(err); document.getElementById("studentCodeDisplay").textContent="Error";}
+    const res = await fetch(`${SCRIPT_URL}?action=getCode`);
+    const data = await res.json();
+    document.getElementById("studentCodeDisplay").textContent = data.code || "Not Set";
+  } catch(err){ console.error(err); document.getElementById("studentCodeDisplay").textContent="Error"; }
 }
 
+// --------------------- Update Student Code ---------------------
 async function updateStudentCode(){
-  const newCode=document.getElementById("studentCodeInput").value.trim();
+  const newCode = document.getElementById("studentCodeInput").value.trim();
   if(!newCode) return alert("Enter a valid student code.");
   try{
-    const payload={action:"setCode", code:newCode};
-    const res=await fetch(SCRIPT_URL,{method:"POST", body:JSON.stringify(payload)});
-    const data=await res.json();
-    if(data.success){document.getElementById("studentCodeDisplay").textContent=newCode; alert("Student code updated!");}
+    const payload = { action:"setCode", code:newCode };
+    const res = await fetch(SCRIPT_URL, { method:"POST", body:JSON.stringify(payload) });
+    const data = await res.json();
+    if(data.success){ document.getElementById("studentCodeDisplay").textContent=newCode; alert("Student code updated!"); }
     else alert("Failed to update code");
-  }catch(err){console.error(err); alert("Error updating code");}
+  } catch(err){ console.error(err); alert("Error updating code"); }
 }
 
+// --------------------- Fetch Grades ---------------------
 async function fetchGrades(){
   try{
-    const res=await fetch(`${SCRIPT_URL}?action=getGrades`);
-    const data=await res.json();
-    const tbody=document.querySelector("#gradesTable tbody");
-    tbody.innerHTML="";
+    const res = await fetch(`${SCRIPT_URL}?action=getGrades`);
+    const data = await res.json();
+    const tbody = document.querySelector("#gradesTable tbody");
+    tbody.innerHTML = "";
     data.forEach(row=>{
-      const tr=document.createElement("tr");
-      tr.innerHTML=`<td>${row.Timestamp||""}</td><td>${row.Class||""}</td><td>${row.StudentID||""}</td><td>${row.FirstName||""}</td><td>${row.LastName||""}</td><td>${row.Score||""}</td>`;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${row.Timestamp||""}</td><td>${row.Class||""}</td><td>${row.StudentID||""}</td><td>${row.FirstName||""}</td><td>${row.LastName||""}</td><td>${row.Score||""}</td>`;
       tbody.appendChild(tr);
     });
-    document.getElementById("entryCount").textContent=data.length;
-  }catch(err){console.error(err);}
+    document.getElementById("entryCount").textContent = data.length;
+    // Apply column toggle if active
+    if(columnsHidden) toggleColumns(true);
+  } catch(err){ console.error(err); }
 }
 
+// --------------------- Download CSV ---------------------
 async function downloadCSV(){
-  const filename=document.getElementById("csvNameInput").value.trim()||"grades.csv";
+  const filename = document.getElementById("csvNameInput").value.trim() || "grades.csv";
   try{
-    const res=await fetch(`${SCRIPT_URL}?action=downloadCSV`);
-    const csv=await res.text();
-    const blob=new Blob([csv],{type:"text/csv"});
-    const link=document.createElement("a");
-    link.href=URL.createObjectURL(blob);
-    link.download=filename;
+    const res = await fetch(`${SCRIPT_URL}?action=downloadCSV`);
+    const csv = await res.text();
+    const blob = new Blob([csv], { type:"text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(link.href);
-  }catch(err){alert("Failed to download CSV:"+err);}
+  } catch(err){ alert("Failed to download CSV: "+err); }
 }
 
+// --------------------- Clear Grades ---------------------
 async function clearGrades(){
   if(!confirm("Are you sure you want to clear all grades?")) return;
   await fetch(`${SCRIPT_URL}?action=clearGrades`);
@@ -115,8 +132,35 @@ async function clearGrades(){
   alert("Grades cleared.");
 }
 
-setInterval(()=>{dotState=!dotState; dot.style.backgroundColor=dotState?"green":"red"; fetchGrades();},1000);
-window.addEventListener("DOMContentLoaded",()=>{fetchStudentCode(); fetchGrades();});
+// --------------------- Toggle Columns ---------------------
+function toggleColumns(hide){
+  const table = document.getElementById("gradesTable");
+  const colIndices = [2,5]; // StudentID and Score
+  for(let row of table.rows){
+    for(let idx of colIndices){
+      if(row.cells[idx]) row.cells[idx].style.display = hide ? "none" : "";
+    }
+  }
+}
+
+toggleBtn.addEventListener("click", ()=>{
+  columnsHidden = !columnsHidden;
+  toggleColumns(columnsHidden);
+  toggleBtn.textContent = columnsHidden ? "Show ID & Score" : "Hide ID & Score";
+});
+
+// --------------------- Refresh Dot & Table ---------------------
+setInterval(()=>{
+  dotState = !dotState;
+  dot.style.backgroundColor = dotState ? "green" : "red";
+  fetchGrades();
+}, 1000);
+
+// --------------------- Initial Load ---------------------
+window.addEventListener("DOMContentLoaded", ()=>{
+  fetchStudentCode();
+  fetchGrades();
+});
 </script>
 </body>
 </html>
