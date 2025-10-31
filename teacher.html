@@ -35,10 +35,41 @@
     margin-bottom: 20px;
     font-weight: 500;
   }
+  .teacher-tools {
+    background: #fff;
+    padding: 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 500px;
+    margin: 0 auto 20px auto;
+    text-align: center;
+  }
+  .teacher-tools input {
+    padding: 6px 8px;
+    margin: 4px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    width: 120px;
+  }
+  .teacher-tools button {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    background: #007bff;
+    color: #fff;
+    cursor: pointer;
+    margin: 4px;
+    transition: background 0.2s ease;
+  }
+  .teacher-tools button:hover { background: #0056b3; }
   table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   }
   thead {
     background: #007bff;
@@ -69,6 +100,20 @@
   Current Student Code: <span id="currentCode">Loading...</span>
 </div>
 
+<div class="teacher-tools">
+  <div>
+    <label>Change Student Code:</label>
+    <input type="text" id="newCode" maxlength="6">
+    <button onclick="updateStudentCode()">Set Code</button>
+  </div>
+  <div style="margin-top:10px;">
+    <label>CSV File Name:</label>
+    <input type="text" id="csvName" placeholder="grades.csv">
+    <button onclick="downloadCSV()">Download CSV</button>
+    <button onclick="clearGradesSheet()">Clear Grades</button>
+  </div>
+</div>
+
 <table>
   <thead>
     <tr>
@@ -86,7 +131,7 @@
 </table>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwA_uTmc738DA5J4CGLsVFNM1ihMY04ToVordks_dQ-PNVPuvXzbPG-qlnkh1KBsqj1iA/exec"; // replace with your deployed Apps Script URL
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwA_uTmc738DA5J4CGLsVFNM1ihMY04ToVordks_dQ-PNVPuvXzbPG-qlnkh1KBsqj1iA/exec"; // replace with your Apps Script deployment URL
 let dot = document.getElementById("updateDot");
 let lastToggle = false;
 
@@ -109,6 +154,7 @@ async function loadGrades() {
     const data = await res.json();
     const tbody = document.getElementById("gradesBody");
     tbody.innerHTML = "";
+
     data.forEach(row => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -128,6 +174,59 @@ async function loadGrades() {
   } catch(err) {
     console.error("Error loading grades:", err);
     dot.style.backgroundColor = "red";
+  }
+}
+
+// Update student code
+async function updateStudentCode() {
+  const code = document.getElementById("newCode").value.trim();
+  if(!code) return alert("Enter a code");
+  try {
+    await fetch(SCRIPT_URL + "?action=setStudentCode", {
+      method: "POST",
+      body: JSON.stringify({ newCode: code })
+    });
+    alert("Student code updated!");
+    document.getElementById("currentCode").textContent = code;
+  } catch(err) {
+    console.error(err);
+    alert("Failed to update code");
+  }
+}
+
+// Download CSV
+async function downloadCSV() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getGrades`);
+    const data = await res.json();
+    const csvName = document.getElementById("csvName").value || "grades.csv";
+
+    let csvContent = "Timestamp,Class,Student ID,First Name,Last Name,Score\n";
+    data.forEach(r => {
+      csvContent += `${r.timestamp},${r.class},${r.studentId},${r.firstName},${r.lastName},${r.score}\n`;
+    });
+
+    const blob = new Blob([csvContent], {type: 'text/csv'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = csvName;
+    link.click();
+  } catch(err) {
+    console.error(err);
+    alert("Failed to download CSV");
+  }
+}
+
+// Clear Grades
+async function clearGradesSheet() {
+  if(!confirm("Are you sure you want to clear all grades?")) return;
+  try {
+    await fetch(SCRIPT_URL + "?action=clearGrades", { method: "POST" });
+    alert("Grades cleared");
+    loadGrades();
+  } catch(err) {
+    console.error(err);
+    alert("Failed to clear grades");
   }
 }
 
