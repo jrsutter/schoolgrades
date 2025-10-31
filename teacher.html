@@ -1,268 +1,262 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teacher Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  body {
-    font-family: 'Roboto', sans-serif;
-    background: #f0f2f5;
-    margin: 0;
-    padding: 20px;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      width: 90%;
+      max-width: 1100px;
+      margin-top: 30px;
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-top: 0;
+      font-weight: 700;
+      color: #333;
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .dot {
+      height: 14px;
+      width: 14px;
+      border-radius: 50%;
+      background-color: red;
+      transition: background-color 0.3s;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    input[type="text"], input[type="number"] {
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+      flex: 1;
+      min-width: 180px;
+    }
+    button {
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #125aa0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #1976d2;
+      color: white;
+    }
+    tr:nth-child(even) { background: #f9f9f9; }
+    tr:hover { background: #f1f1f1; }
 
-  h1 {
-    text-align: center;
-    color: #333;
-  }
-
-  .top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 900px;
-    margin: 0 auto 20px auto;
-  }
-
-  .update-status {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-    color: #333;
-  }
-
-  #updateDot {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    margin-left: 10px;
-    background: red;
-    transition: background 0.3s;
-  }
-
-  .card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    padding: 20px;
-    max-width: 900px;
-    margin: 10px auto;
-  }
-
-  input, select {
-    padding: 8px 10px;
-    margin: 6px 0;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-  }
-
-  button {
-    background: #4f46e5;
-    color: #fff;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin: 4px 0;
-    font-weight: 500;
-  }
-
-  button:hover { background: #4338ca; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    table-layout: fixed;
-  }
-
-  th, td {
-    border: 1px solid #e0e0e0;
-    padding: 8px;
-    text-align: left;
-    font-size: 14px;
-    word-wrap: break-word;
-  }
-
-  th {
-    background: #f9fafb;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-  }
-
-  tr:nth-child(even) { background: #f7f7f7; }
-
-  .small-label { font-weight: 500; margin-right: 8px; }
-</style>
+    .footer-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+    .toggle-section {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Teacher Tools</h1>
+    <div class="status-bar">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="dot" id="statusDot"></div>
+        <span id="entryCount">Entries: 0</span>
+      </div>
+      <div class="toggle-section">
+        <label for="hideSensitive">Hide IDs & Grades</label>
+        <input type="checkbox" id="hideSensitive" onchange="toggleSensitiveColumns()">
+      </div>
+    </div>
 
-<h1>Teacher Dashboard</h1>
+    <div class="controls">
+      <div style="flex:1;">
+        <label>Current Student Code:</label><br>
+        <span id="currentCode" style="font-weight:bold;">Loading...</span>
+      </div>
+      <div style="flex:1;">
+        <label>Set New Student Code:</label><br>
+        <input type="text" id="newCodeInput" placeholder="Enter new code">
+        <button onclick="updateStudentCode()">Set Code</button>
+      </div>
+    </div>
 
-<!-- Top bar with update dot and entry count -->
-<div class="top-bar">
-  <div class="update-status">
-    Auto-refresh <span id="updateDot"></span>
+    <table id="gradesTable">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Class</th>
+          <th>Student ID</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="footer-controls">
+      <input type="text" id="csvNameInput" placeholder="Filename (e.g., period1.csv)">
+      <button onclick="downloadCSV()">Download CSV</button>
+      <button onclick="clearGrades()">Clear Grades</button>
+    </div>
   </div>
-  <div>Total Entries: <span id="entryCount">0</span></div>
-</div>
 
-<!-- Config card -->
-<div class="card">
-  <div>
-    <span class="small-label">Current Student Code:</span>
-    <span id="currentCode">Loading...</span>
-  </div>
-  <div style="margin-top:10px;">
-    <span class="small-label">Set New Student Code:</span>
-    <input type="text" id="newCodeInput" maxlength="6" placeholder="New code">
-    <button onclick="setNewCode()">Set Code</button>
-  </div>
-  <div style="margin-top:10px;">
-    <span class="small-label">CSV Filename:</span>
-    <input type="text" id="csvNameInput" placeholder="grades.csv">
-    <button onclick="downloadCSV()">Download CSV</button>
-    <button onclick="clearGrades()">Clear Grades</button>
-  </div>
-</div>
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // <-- replace with your Apps Script deployment URL
+    let dotState = false;
 
-<!-- Grades Table -->
-<div class="card">
-  <table id="gradesTable">
-    <thead>
-      <tr>
-        <th>Timestamp</th>
-        <th>Class</th>
-        <th>Student ID</th>
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th>Score</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td colspan="6">Loading...</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // replace with deployed Apps Script URL
-let dotState = false;
-
-// Load current student code
-async function loadCurrentCode() {
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=getStudentCode`);
-    const data = await res.json();
-    document.getElementById("currentCode").textContent = data.code || "N/A";
-  } catch(err) { console.error(err); }
-}
-
-// Set new student code
-async function setNewCode() {
-  const newCode = document.getElementById("newCodeInput").value.trim();
-  if (!newCode) return alert("Enter a code");
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=setStudentCode`, {
-      method: "POST",
-      body: JSON.stringify({ newCode })
-    });
-    const data = await res.json();
-    if (data.status === "success") {
-      alert("Student code updated!");
-      document.getElementById("newCodeInput").value = "";
-      loadCurrentCode();
-    } else { alert("Failed to set code"); }
-  } catch(err) { console.error(err); alert("Error updating code"); }
-}
-
-// Load grades table
-async function loadGrades() {
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=getGrades`);
-    const data = await res.json();
-    const tbody = document.querySelector("#gradesTable tbody");
-    tbody.innerHTML = "";
-    if (!data || !data.length) {
-      tbody.innerHTML = `<tr><td colspan="6">No grades yet.</td></tr>`;
-      document.getElementById("entryCount").textContent = 0;
-      return;
+    async function fetchGrades() {
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getGrades`);
+        const data = await res.json();
+        renderTable(data);
+      } catch (err) {
+        console.error(err);
+      }
     }
-    data.forEach(r => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${r.timestamp}</td>
-        <td>${r.class}</td>
-        <td>${r.studentId}</td>
-        <td>${r.firstName}</td>
-        <td>${r.lastName}</td>
-        <td>${r.score}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-    document.getElementById("entryCount").textContent = data.length;
-    // Toggle dot color
-    dotState = !dotState;
-    document.getElementById("updateDot").style.background = dotState ? "green" : "red";
-  } catch(err) { console.error(err); }
-}
 
-// Download CSV
-function downloadCSV() {
-  const filename = document.getElementById("csvNameInput")?.value.trim() || "grades.csv";
+    async function fetchStudentCode() {
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getStudentCode`);
+        const data = await res.json();
+        document.getElementById("currentCode").textContent = data.studentCode || "Not set";
+      } catch (err) {
+        console.error(err);
+      }
+    }
 
-  // Fetch grades JSON from Apps Script
-  fetch(`${SCRIPT_URL}?action=getGrades`)
-    .then(res => res.json())
-    .then(data => {
-      if (!data || !data.length) return alert("No grades to download.");
+    function renderTable(data) {
+      const tbody = document.querySelector("#gradesTable tbody");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.timestamp}</td>
+          <td>${row.class}</td>
+          <td>${row.studentId}</td>
+          <td>${row.firstName}</td>
+          <td>${row.lastName}</td>
+          <td>${row.score}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.getElementById("entryCount").textContent = `Entries: ${data.length}`;
+      toggleSensitiveColumns();
+    }
 
-      // Create CSV content
-      const headers = ["Timestamp","Class","Student ID","First Name","Last Name","Score"];
-      const rows = data.map(r => [r.timestamp,r.class,r.studentId,r.firstName,r.lastName,r.score]);
-      const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    function toggleSensitiveColumns() {
+      const hide = document.getElementById("hideSensitive").checked;
+      const table = document.getElementById("gradesTable");
+      if (!table) return;
 
-      // Create a blob and trigger download
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const sensitiveCols = [2, 5];
+      for (let row of table.rows) {
+        sensitiveCols.forEach(idx => {
+          if (row.cells[idx]) row.cells[idx].style.display = hide ? "none" : "";
+        });
+      }
+    }
+
+    async function updateStudentCode() {
+      const newCode = document.getElementById("newCodeInput").value.trim();
+      if (!newCode) return alert("Please enter a code.");
+      try {
+        await fetch(`${SCRIPT_URL}?action=setStudentCode&newCode=${encodeURIComponent(newCode)}`);
+        alert("Student code updated!");
+        fetchStudentCode();
+      } catch (err) {
+        alert("Failed to set code.");
+      }
+    }
+
+    function downloadCSV() {
+      const filename = document.getElementById("csvNameInput")?.value.trim() || "grades.csv";
       const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
+      link.href = `${SCRIPT_URL}?action=downloadCSV`;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Failed to generate CSV.");
-    });
-}
+    }
 
+    async function clearGrades() {
+      if (!confirm("Are you sure you want to clear all grades?")) return;
+      try {
+        await fetch(`${SCRIPT_URL}?action=clearGrades`);
+        alert("Grades cleared!");
+        fetchGrades();
+      } catch (err) {
+        alert("Failed to clear grades.");
+      }
+    }
 
+    // Red/green dot updater
+    setInterval(() => {
+      dotState = !dotState;
+      document.getElementById("statusDot").style.backgroundColor = dotState ? "green" : "red";
+      fetchGrades();
+      fetchStudentCode();
+    }, 500);
 
-
-// Clear grades
-async function clearGrades() {
-  if (!confirm("Are you sure you want to clear all grades?")) return;
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=clearGrades`);
-    const data = await res.json();
-    if (data.status === "success") {
-      alert("Grades cleared!");
-      loadGrades();
-    } else { alert("Failed to clear grades"); }
-  } catch(err) { console.error(err); alert("Error clearing grades"); }
-}
-
-// Initialize
-loadCurrentCode();
-loadGrades();
-setInterval(loadGrades, 500);
-</script>
-
+    // Initial load
+    fetchGrades();
+    fetchStudentCode();
+  </script>
 </body>
 </html>
