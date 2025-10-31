@@ -159,23 +159,22 @@ let hiddenColumns = {}; // track which columns are hidden
 
 // -------------------- Teacher Functions --------------------
 async function fetchStudentCode() {
-  const res = await fetch(`${SCRIPT_URL}?action=getCode`);
-  const data = await res.json();
-  document.getElementById("studentCodeDisplay").textContent = data.code || "Not Set";
-}
-
-async function updateStudentCode() {
-  const newCode = document.getElementById("studentCodeInput").value.trim();
-  if (!newCode) return alert("Enter a valid student code.");
-  const res = await fetch(`${SCRIPT_URL}?action=setCode&code=${encodeURIComponent(newCode)}`);
-  const data = await res.json();
-  if (data.success) {
-    document.getElementById("studentCodeDisplay").textContent = newCode;
-    alert("Student code updated successfully!");
-  } else {
-    alert("Failed to update student code.");
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getCode`);
+    const data = await res.json();
+    document.getElementById("studentCodeDisplay").textContent = data.code || "Not Set";
+  } catch(err) {
+    console.error("Failed to fetch student code:", err);
+    document.getElementById("studentCodeDisplay").textContent = "Error";
   }
 }
+
+// Call once page has loaded
+window.addEventListener("DOMContentLoaded", () => {
+  fetchStudentCode();
+  fetchGrades(); // refresh table
+});
+
 
 async function fetchGrades() {
   try {
