@@ -195,9 +195,11 @@ async function downloadCSV() {
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
-    const filename = document.getElementById("csvNameInput")?.value || "grades.csv";
+    const filenameInput = document.getElementById("csvNameInput");
+    const filename = filenameInput && filenameInput.value.trim() ? filenameInput.value.trim() : "grades.csv";
     a.download = filename;
     document.body.appendChild(a);
     a.click();
@@ -206,9 +208,10 @@ async function downloadCSV() {
 
   } catch(err) {
     console.error(err);
-    alert("Failed to download CSV");
+    alert("Failed to download CSV: check deployment URL and access permissions.");
   }
 }
+
 
 // -------------------- Clear Grades --------------------
 async function clearGrades() {
