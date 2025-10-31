@@ -46,6 +46,12 @@ h2 {
   font-weight: 500;
   margin-top: 10px;
 }
+.hide-columns {
+  margin-top: 10px;
+  font-size: 0.9em;
+  cursor: pointer;
+  color: #555;
+}
 </style>
 </head>
 <body>
@@ -62,7 +68,7 @@ h2 {
 <!-- Main submission page -->
 <div id="mainPage" class="card" style="display:none;">
   <label>Student ID (6 digits):</label>
-  <input type="number" id="studentIdInput" min="0" max="999999" placeholder="123456">
+  <input type="number" id="studentIdInput" min="0" max="999999" placeholder="123456" oninput="loadClasses()">
 
   <label>Class:</label>
   <select id="classSelect">
@@ -77,12 +83,12 @@ h2 {
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // <-- update this
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // <-- update with new web app URL
 
 // -------------------- Landing Page --------------------
 async function verifyCode() {
   let inputCode = document.getElementById("studentCodeInput").value || "";
-  inputCode = inputCode.trim().replace(/\s/g, '').toUpperCase(); // remove spaces and normalize
+  inputCode = inputCode.trim().replace(/\s/g,'').toUpperCase();
 
   if (!inputCode) return alert("Enter student code");
 
@@ -105,20 +111,33 @@ async function verifyCode() {
   }
 }
 
-// -------------------- Load Class Dropdown --------------------
+// -------------------- Load Classes --------------------
 async function loadClasses() {
   try {
+    const studentId = document.getElementById("studentIdInput").value.trim();
+
+    // 1️⃣ Fetch all classes
     const res = await fetch(`${SCRIPT_URL}?action=getClasses`);
-    const data = await res.json();
+    const classData = await res.json();
 
     const select = document.getElementById("classSelect");
     select.innerHTML = "";
-    data.forEach(cls => {
+    classData.forEach(cls => {
       const option = document.createElement("option");
       option.value = cls;
       option.textContent = cls;
       select.appendChild(option);
     });
+
+    // 2️⃣ Fetch student's existing class if student ID exists
+    if (studentId) {
+      const res2 = await fetch(`${SCRIPT_URL}?action=getStudentClass&studentId=${encodeURIComponent(studentId)}`);
+      const studentClassData = await res2.json();
+      if (studentClassData.class) {
+        select.value = studentClassData.class;
+      }
+    }
+
   } catch(err) {
     console.error("Failed to load classes:", err);
     const select = document.getElementById("classSelect");
@@ -132,15 +151,15 @@ async function submitGrade() {
   const cls = document.getElementById("classSelect").value;
   let grade = document.getElementById("gradeInput").value.trim();
 
-  studentId = studentId.replace(/\s/g, '');
-  grade = grade.replace(/\s/g, '');
+  studentId = studentId.replace(/\s/g,'');
+  grade = grade.replace(/\s/g,'');
 
   if (!studentId) return alert("Enter Student ID");
   if (studentId.length > 6) return alert("Student ID cannot exceed 6 digits");
 
   try {
-    const payload = { studentId, class: cls, grade };
-    const res = await fetch(`${SCRIPT_URL}?action=submitGrade`, {
+    const payload = { studentId, class: cls, grade, action: "submitGrade" };
+    const res = await fetch(SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify(payload)
     });
