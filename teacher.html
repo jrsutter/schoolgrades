@@ -1,261 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Teacher Tools</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: "Roboto", sans-serif;
-      background-color: #f5f7fa;
-      margin: 0;
-      padding: 0;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 50px auto;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-      padding: 30px 40px;
-    }
-
-    h1 {
-      text-align: center;
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .dot {
-      height: 16px;
-      width: 16px;
-      border-radius: 50%;
-      background-color: red;
-      transition: background-color 0.4s;
-    }
-
-    .code-box {
-      font-size: 1.8em;
-      font-weight: 700;
-      color: #333;
-      background: #e9eef5;
-      border-radius: 8px;
-      padding: 10px 20px;
-      display: inline-block;
-    }
-
-    .controls {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-bottom: 15px;
-    }
-
-    input[type="text"] {
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      width: 200px;
-      font-size: 1em;
-    }
-
-    button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 6px;
-      background-color: #4a90e2;
-      color: white;
-      cursor: pointer;
-      font-weight: 500;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background-color: #357ab8;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.95em;
-      margin-top: 10px;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 12px;
-    }
-
-    th {
-      background-color: #4a90e2;
-      color: white;
-      position: sticky;
-      top: 0;
-    }
-
-    tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-
-    tr:hover {
-      background-color: #e8f0fe;
-    }
-
-    .entry-count {
-      text-align: right;
-      margin-bottom: 10px;
-      color: #555;
-      font-weight: 500;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Teacher Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body { font-family:"Roboto",sans-serif; background:#f5f7fa; margin:0; padding:0; }
+.container { max-width:900px; margin:50px auto; background:white; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.1); padding:30px 40px; }
+h1 { text-align:center; color:#333; margin-bottom:20px; }
+.status-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
+.dot { height:16px; width:16px; border-radius:50%; background:red; transition:0.4s; }
+.code-box { font-size:1.8em; font-weight:700; color:#333; background:#e9eef5; border-radius:8px; padding:10px 20px; display:inline-block; }
+.controls { display:flex; gap:15px; flex-wrap:wrap; justify-content:center; margin-bottom:15px; }
+input[type="text"] { padding:10px; border-radius:6px; border:1px solid #ccc; width:200px; font-size:1em; }
+button { padding:10px 16px; border:none; border-radius:6px; background:#4a90e2; color:white; cursor:pointer; font-weight:500; transition:0.3s; }
+button:hover { background:#357ab8; }
+table { width:100%; border-collapse:collapse; font-size:0.95em; margin-top:10px; }
+th,td { text-align:left; padding:12px; }
+th { background:#4a90e2; color:white; position:sticky; top:0; }
+tr:nth-child(even){background:#f2f2f2;}
+tr:hover{background:#e8f0fe;}
+.entry-count { text-align:right; margin-bottom:10px; color:#555; font-weight:500; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Teacher Tools</h1>
+<div class="container">
+<h1>Teacher Tools</h1>
 
-    <div class="status-bar">
-      <div class="code-box">Student Code: <span id="studentCodeDisplay">Loading...</span></div>
-      <div class="dot" id="updateDot"></div>
-    </div>
+<div class="status-bar">
+  <div class="code-box">Student Code: <span id="studentCodeDisplay">Loading...</span></div>
+  <div class="dot" id="updateDot"></div>
+</div>
 
-    <div class="controls">
-      <input type="text" id="studentCodeInput" placeholder="Set New Student Code">
-      <button onclick="updateStudentCode()">Set Code</button>
+<div class="controls">
+  <input type="text" id="studentCodeInput" placeholder="Set New Student Code">
+  <button onclick="updateStudentCode()">Set Code</button>
+  <input type="text" id="csvNameInput" placeholder="CSV Filename">
+  <button onclick="downloadCSV()">Download CSV</button>
+  <button onclick="clearGrades()">Clear Grades</button>
+</div>
 
-      <input type="text" id="csvNameInput" placeholder="CSV Filename">
-      <button onclick="downloadCSV()">Download CSV</button>
-      <button onclick="clearGrades()">Clear Grades</button>
-    </div>
+<div class="entry-count">
+  Total Entries: <span id="entryCount">0</span>
+</div>
 
-    <div class="entry-count">
-      Total Entries: <span id="entryCount">0</span>
-    </div>
+<table id="gradesTable">
+<thead>
+<tr>
+<th>Timestamp</th><th>Class</th><th>Student ID</th><th>First Name</th><th>Last Name</th><th>Score</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
 
-    <table id="gradesTable">
-      <thead>
-        <tr>
-          <th>Timestamp</th>
-          <th>Class</th>
-          <th>Student ID</th>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>Score</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec";
+const dot=document.getElementById("updateDot");
+let dotState=false;
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // replace with Apps Script URL
-    const dot = document.getElementById("updateDot");
-    let dotState = false;
+async function fetchStudentCode(){
+  try{
+    const res=await fetch(`${SCRIPT_URL}?action=getCode`);
+    const data=await res.json();
+    document.getElementById("studentCodeDisplay").textContent=data.code||"Not Set";
+  }catch(err){console.error(err); document.getElementById("studentCodeDisplay").textContent="Error";}
+}
 
-    // -------------------- Fetch current student code --------------------
-    async function fetchStudentCode() {
-      try {
-        const res = await fetch(`${SCRIPT_URL}?action=getCode`);
-        const data = await res.json();
-        document.getElementById("studentCodeDisplay").textContent = data.code || "Not Set";
-      } catch(err) {
-        console.error("Failed to fetch code:", err);
-        document.getElementById("studentCodeDisplay").textContent = "Error";
-      }
-    }
+async function updateStudentCode(){
+  const newCode=document.getElementById("studentCodeInput").value.trim();
+  if(!newCode) return alert("Enter a valid student code.");
+  try{
+    const payload={action:"setCode", code:newCode};
+    const res=await fetch(SCRIPT_URL,{method:"POST", body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(data.success){document.getElementById("studentCodeDisplay").textContent=newCode; alert("Student code updated!");}
+    else alert("Failed to update code");
+  }catch(err){console.error(err); alert("Error updating code");}
+}
 
-    async function updateStudentCode() {
-      const newCode = document.getElementById("studentCodeInput").value.trim();
-      if (!newCode) return alert("Enter a valid student code.");
-
-      try {
-        const res = await fetch(`${SCRIPT_URL}?action=setCode&code=${encodeURIComponent(newCode)}`);
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById("studentCodeDisplay").textContent = newCode;
-          alert("Student code updated successfully!");
-        } else {
-          alert("Failed to update student code.");
-        }
-      } catch(err) {
-        console.error(err);
-        alert("Error updating student code");
-      }
-    }
-
-    // -------------------- Fetch grades --------------------
-    async function fetchGrades() {
-      try {
-        const res = await fetch(`${SCRIPT_URL}?action=getGrades`);
-        const data = await res.json();
-        const tbody = document.querySelector("#gradesTable tbody");
-        tbody.innerHTML = "";
-
-        data.forEach(row => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${row.Timestamp || ""}</td>
-            <td>${row.Class || ""}</td>
-            <td>${row.StudentID || ""}</td>
-            <td>${row.FirstName || ""}</td>
-            <td>${row.LastName || ""}</td>
-            <td>${row.Score || ""}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        document.getElementById("entryCount").textContent = data.length;
-      } catch(err) {
-        console.error("Error fetching grades:", err);
-      }
-    }
-
-    // -------------------- CSV Download --------------------
-    async function downloadCSV() {
-      const filename = document.getElementById("csvNameInput").value.trim() || "grades.csv";
-      try {
-        const res = await fetch(`${SCRIPT_URL}?action=downloadCSV`);
-        const csv = await res.text();
-
-        const blob = new Blob([csv], { type: "text/csv" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(link.href);
-      } catch(err) {
-        alert("Failed to download CSV: " + err);
-      }
-    }
-
-    // -------------------- Clear grades --------------------
-    async function clearGrades() {
-      if (!confirm("Are you sure you want to clear all grades?")) return;
-      await fetch(`${SCRIPT_URL}?action=clearGrades`);
-      await fetchGrades();
-      alert("Grades cleared.");
-    }
-
-    // -------------------- Dot indicator & refresh --------------------
-    setInterval(() => {
-      dotState = !dotState;
-      dot.style.backgroundColor = dotState ? "green" : "red";
-      fetchGrades();
-    }, 1000);
-
-    // -------------------- Initial load --------------------
-    window.addEventListener("DOMContentLoaded", () => {
-      fetchStudentCode();
-      fetchGrades();
+async function fetchGrades(){
+  try{
+    const res=await fetch(`${SCRIPT_URL}?action=getGrades`);
+    const data=await res.json();
+    const tbody=document.querySelector("#gradesTable tbody");
+    tbody.innerHTML="";
+    data.forEach(row=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${row.Timestamp||""}</td><td>${row.Class||""}</td><td>${row.StudentID||""}</td><td>${row.FirstName||""}</td><td>${row.LastName||""}</td><td>${row.Score||""}</td>`;
+      tbody.appendChild(tr);
     });
-  </script>
+    document.getElementById("entryCount").textContent=data.length;
+  }catch(err){console.error(err);}
+}
+
+async function downloadCSV(){
+  const filename=document.getElementById("csvNameInput").value.trim()||"grades.csv";
+  try{
+    const res=await fetch(`${SCRIPT_URL}?action=downloadCSV`);
+    const csv=await res.text();
+    const blob=new Blob([csv],{type:"text/csv"});
+    const link=document.createElement("a");
+    link.href=URL.createObjectURL(blob);
+    link.download=filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }catch(err){alert("Failed to download CSV:"+err);}
+}
+
+async function clearGrades(){
+  if(!confirm("Are you sure you want to clear all grades?")) return;
+  await fetch(`${SCRIPT_URL}?action=clearGrades`);
+  await fetchGrades();
+  alert("Grades cleared.");
+}
+
+setInterval(()=>{dotState=!dotState; dot.style.backgroundColor=dotState?"green":"red"; fetchGrades();},1000);
+window.addEventListener("DOMContentLoaded",()=>{fetchStudentCode(); fetchGrades();});
+</script>
 </body>
 </html>
