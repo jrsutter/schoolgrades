@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Grade Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: #f3f4f6;
+    margin: 0;
+    padding: 20px;
+  }
+  h2 {
+    text-align: center;
+    color: #333;
+  }
+  .card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 900px;
+    margin: 20px auto;
+  }
+  button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover { background: #0056b3; }
+
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  select {
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  th {
+    background: #007bff;
+    color: white;
+  }
+  tr:hover { background: #f1f1f1; }
+  #entryCount {
+    font-weight: 500;
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+
+<h2>Teacher Grade Dashboard</h2>
+
+<div class="card">
+  <div class="controls">
+    <div>
+      <button onclick="toggleHiddenColumns()">Hide ID & Score</button>
+      <button onclick="clearGrades()">Clear Grades</button>
+      <button onclick="downloadCSV()">Download CSV</button>
+    </div>
+    <div>
+      <label for="classFilter">Filter by Class:</label>
+      <select id="classFilter" onchange="filterTableByClass()">
+        <option value="All">All Classes</option>
+      </select>
+    </div>
+    <div id="entryCount">Loading...</div>
+  </div>
+
+  <table id="gradesTable">
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th class="studentIdHeader">Student ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th class="scoreHeader">Score</th>
+        <th>Class</th>
+      </tr>
+    </thead>
+    <tbody id="gradesTableBody"></tbody>
+  </table>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // Replace with your Apps Script deployment URL
+let allGrades = [];
+
+// ---------- Load Grades ----------
+function loadGrades() {
+  fetch(SCRIPT_URL + "?action=getGrades")
+    .then(res => res.json())
+    .then(data => {
+      allGrades = data;
+      populateClassFilter(data);
+      renderTable(data);
+    })
+    .catch(err => {
+      console.error("Error loading grades:", err);
+      document.getElementById("entryCount").textContent = "Error loading grades";
+    });
+}
+
+// ---------- Populate Class Dropdown ----------
+function populateClassFilter(data) {
+  const classSet = new Set();
+  data.forEach(row => {
+    if (row.Class && row.Class.trim() !== "") {
+      classSet.add(row.Class.trim());
+    }
+  });
+
+  const select = document.getElementById("classFilter");
+  select.innerHTML = '<option value="All">All Classes</option>';
+  classSet.forEach(cls => {
+    const opt = document.createElement("option");
+    opt.value = cls;
+    opt.textContent = cls;
+    select.appendChild(opt);
+  });
+}
+
+// ---------- Filter Table by Class ----------
+function filterTableByClass() {
+  const selectedClass = document.getElementById("classFilter").value;
+  if (selectedClass === "All") {
+    renderTable(allGrades);
+  } else {
+    const filtered = allGrades.filter(row => row.Class === selectedClass);
+    renderTable(filtered);
+  }
+}
+
+// ---------- Render Table ----------
+function renderTable(data) {
+  const tableBody = document.getElementById("gradesTableBody");
+  tableBody.innerHTML = "";
+
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.Timestamp}</td>
+      <td class="studentId">${row.StudentID}</td>
+      <td>${row.FirstName}</td>
+      <td>${row.LastName}</td>
+      <td class="score">${row.Score}</td>
+      <td>${row.Class}</td>
+    `;
+    tableBody.appendChild(tr);
+  });
+
+  document.getElementById("entryCount").textContent = `Total Entries: ${data.length}`;
+}
+
+// ---------- Hide/Show Student ID + Score ----------
+function toggleHiddenColumns() {
+  const ids = document.querySelectorAll(".studentId, .studentIdHeader");
+  const scores = document.querySelectorAll(".score, .scoreHeader");
+  const isHidden = ids[0]?.style.display === "none";
+
+  ids.forEach(cell => cell.style.display = isHidden ? "" : "none");
+  scores.forEach(cell => cell.style.display = isHidden ? "" : "none");
+}
+
+// ---------- Clear Grades ----------
+function clearGrades() {
+  if (!confirm("Are you sure you want to clear all grades?")) return;
+  fetch(SCRIPT_URL + "?action=clearGrades")
+    .then(res => res.json())
+    .then(response => {
+      if (response.success) {
+        allGrades = [];
+        renderTable([]);
+      }
+    })
+    .catch(err => console.error("Error clearing grades:", err));
+}
+
+// ---------- Download as CSV ----------
+function downloadCSV() {
+  const rows = [
+    ["Timestamp", "Student ID", "First Name", "Last Name", "Score", "Class"],
+    ...allGrades.map(r => [r.Timestamp, r.StudentID, r.FirstName, r.LastName, r.Score, r.Class])
+  ];
+
+  let csvContent = rows.map(e => e.join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "Grades_Report.csv";
+  link.click();
+}
+
+// ---------- Initialize ----------
+window.onload = loadGrades;
+</script>
+
+</body>
+</html>
