@@ -4,46 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Teacher Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <style>
   body {
-    font-family: Arial, sans-serif;
-    background: #f3f3f3;
+    font-family: 'Roboto', sans-serif;
+    background: #f3f4f6;
     margin: 0;
     padding: 20px;
   }
-  h1 {
-    text-align: center;
-  }
-  #controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-  }
-  #controls > div {
-    margin: 5px 10px;
+  h2 { text-align: center; color: #333; }
+  .card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 900px;
+    margin: 20px auto;
   }
   button {
     background: #007bff;
     color: white;
     border: none;
-    border-radius: 6px;
     padding: 8px 12px;
+    border-radius: 6px;
     cursor: pointer;
   }
-  button:hover {
-    background: #0056b3;
-  }
-  select, input[type="text"] {
-    padding: 5px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-  }
+  button:hover { background: #0056b3; }
   table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
+    margin-top: 15px;
   }
   th, td {
     border: 1px solid #ddd;
@@ -54,169 +44,195 @@
     background: #007bff;
     color: white;
   }
-  #entriesCount {
-    font-weight: bold;
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
   }
-  #dot {
-    height: 10px;
-    width: 10px;
-    border-radius: 50%;
-    background: red;
-    display: inline-block;
-    margin-left: 10px;
+  .code-section input {
+    width: 100px;
+    margin-left: 6px;
+  }
+  .filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 </style>
 </head>
 <body>
 
-<h1>Teacher Dashboard</h1>
+<h2>Teacher Dashboard</h2>
 
-<div id="controls">
-  <div>
-    <label><b>Student Code:</b></label>
-    <span id="studentCode">Loading...</span>
-    <input type="text" id="newCode" placeholder="Enter new code">
-    <button onclick="setStudentCode()">Set Code</button>
+<div class="card">
+  <div class="top-bar">
+    <div class="code-section">
+      <label>Student Code:</label>
+      <span id="currentCode" style="font-weight: 500;">Loading...</span>
+      <input type="text" id="newCodeInput" placeholder="New code">
+      <button onclick="setNewCode()">Set Code</button>
+    </div>
+    <div class="filter-controls">
+      <label for="classFilter">Filter Class:</label>
+      <select id="classFilter" onchange="filterClass()">
+        <option value="All">All</option>
+      </select>
+      <button onclick="toggleColumns()">Hide/Show Columns</button>
+      <span id="entryCount" style="font-weight: 500;">Entries: 0</span>
+    </div>
   </div>
-  <div>
-    <label><b>Rename CSV:</b></label>
-    <input type="text" id="csvName" placeholder="Grades Filename">
+
+  <div style="margin-top:10px;">
+    <input type="text" id="csvNameInput" placeholder="File name (optional)">
     <button onclick="downloadCSV()">Download CSV</button>
+    <button onclick="clearGrades()">Clear Grades</button>
   </div>
-  <div>
-    <label><b>Filter Class:</b></label>
-    <select id="classFilter" onchange="filterClass()">
-      <option value="All">All Classes</option>
-    </select>
-  </div>
-  <div>
-    <button onclick="toggleColumns()">Hide ID & Score</button>
-  </div>
-  <div id="entriesCount">Entries: 0</div>
-  <div id="dot"></div>
+
+  <table id="gradesTable">
+    <thead>
+      <tr>
+        <th class="col-studentId">Student ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Class</th>
+        <th>Assignment</th>
+        <th class="col-score">Score</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </div>
 
-<table id="gradesTable">
-  <thead>
-    <tr>
-      <th>Student ID</th>
-      <th>First Name</th>
-      <th>Last Name</th>
-      <th>Class</th>
-      <th>Assignment</th>
-      <th>Score</th>
-      <th>Timestamp</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-<br>
-<button style="background:#dc3545;" onclick="clearGrades()">Clear All Grades</button>
-
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec";
-
-let allGrades = [];
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // Replace with your actual deployed Apps Script URL
 let hideColumns = false;
-let dotState = false;
+let allGrades = [];
 
-async function fetchStudentCode() {
-  const res = await fetch(`${SCRIPT_URL}?action=getStudentCode`);
-  const data = await res.json();
-  document.getElementById('studentCode').textContent = data.code;
+// ---------- INITIAL LOAD ----------
+window.onload = async () => {
+  await loadStudentCode();
+  await loadGrades();
+};
+
+// ---------- STUDENT CODE ----------
+async function loadStudentCode() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getStudentCode`);
+    const data = await res.json();
+    document.getElementById("currentCode").textContent = data.code || "(none)";
+  } catch (err) {
+    console.error("Error loading code:", err);
+    document.getElementById("currentCode").textContent = "Error";
+  }
 }
 
-async function setStudentCode() {
-  const newCode = document.getElementById('newCode').value.trim();
-  if (!newCode) return alert("Please enter a code.");
-  await fetch(`${SCRIPT_URL}?action=setStudentCode&code=${encodeURIComponent(newCode)}`);
-  alert("Student code updated!");
-  fetchStudentCode();
+async function setNewCode() {
+  const code = document.getElementById("newCodeInput").value.trim();
+  if (!code) return alert("Enter a new code");
+  try {
+    await fetch(`${SCRIPT_URL}?action=setStudentCode&code=${encodeURIComponent(code)}`);
+    document.getElementById("newCodeInput").value = "";
+    await loadStudentCode();
+    alert("Student code updated!");
+  } catch (err) {
+    console.error(err);
+    alert("Failed to set code");
+  }
 }
 
-async function fetchGrades() {
-  const res = await fetch(`${SCRIPT_URL}?action=getGrades`);
-  const data = await res.json();
-  allGrades = data;
-  populateTable(data);
-  updateClassDropdown(data);
+// ---------- GRADES TABLE ----------
+async function loadGrades() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getGrades`);
+    const data = await res.json();
+    allGrades = data;
+
+    const classSet = new Set(["All"]);
+    data.forEach(row => { if (row.className) classSet.add(row.className); });
+    const filterSelect = document.getElementById("classFilter");
+    filterSelect.innerHTML = "";
+    classSet.forEach(cls => {
+      const opt = document.createElement("option");
+      opt.value = cls;
+      opt.textContent = cls;
+      filterSelect.appendChild(opt);
+    });
+
+    renderTable(data);
+  } catch (err) {
+    console.error("Error loading grades:", err);
+  }
 }
 
-function populateTable(data) {
+function renderTable(data) {
   const tbody = document.querySelector("#gradesTable tbody");
   tbody.innerHTML = "";
   data.forEach(row => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${row.studentId}</td>
+      <td class="col-studentId">${row.studentId}</td>
       <td>${row.firstName}</td>
       <td>${row.lastName}</td>
       <td>${row.className}</td>
       <td>${row.assignment}</td>
-      <td>${row.score}</td>
+      <td class="col-score">${row.score}</td>
       <td>${row.timestamp}</td>
     `;
     tbody.appendChild(tr);
   });
-  document.getElementById("entriesCount").textContent = `Entries: ${data.length}`;
+  document.getElementById("entryCount").textContent = `Entries: ${data.length}`;
 }
 
-function updateClassDropdown(data) {
-  const dropdown = document.getElementById("classFilter");
-  const classes = [...new Set(data.map(d => d.className))].filter(Boolean);
-  dropdown.innerHTML = '<option value="All">All Classes</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
-}
-
+// ---------- FILTER BY CLASS ----------
 function filterClass() {
-  const selectedClass = document.getElementById("classFilter").value;
-  const filtered = selectedClass === "All" ? allGrades : allGrades.filter(d => d.className === selectedClass);
-  populateTable(filtered);
+  const selected = document.getElementById("classFilter").value;
+  const filtered = selected === "All" ? allGrades : allGrades.filter(r => r.className === selected);
+  renderTable(filtered);
 }
 
+// ---------- HIDE/SHOW COLUMNS ----------
 function toggleColumns() {
-  const table = document.getElementById("gradesTable");
   hideColumns = !hideColumns;
-  const display = hideColumns ? "none" : "";
-  for (let row of table.rows) {
-    row.cells[0].style.display = display; // student ID
-    row.cells[5].style.display = display; // score
-  }
+  const idCols = document.querySelectorAll(".col-studentId");
+  const scoreCols = document.querySelectorAll(".col-score");
+  idCols.forEach(col => col.style.display = hideColumns ? "none" : "");
+  scoreCols.forEach(col => col.style.display = hideColumns ? "none" : "");
 }
 
+// ---------- DOWNLOAD CSV ----------
 function downloadCSV() {
-  const csvName = document.getElementById("csvName").value || "Grades";
+  if (!allGrades.length) return alert("No data to download.");
+  const name = document.getElementById("csvNameInput").value.trim() || "grades";
   let csv = "Student ID,First Name,Last Name,Class,Assignment,Score,Timestamp\n";
   allGrades.forEach(r => {
     csv += `${r.studentId},${r.firstName},${r.lastName},${r.className},${r.assignment},${r.score},${r.timestamp}\n`;
   });
+
   const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${csvName}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${name}.csv`;
+  link.click();
 }
 
+// ---------- CLEAR GRADES ----------
 async function clearGrades() {
-  if (!confirm("Are you sure you want to clear all grades?")) return;
-  await fetch(`${SCRIPT_URL}?action=clearGrades`);
-  await fetchGrades();
-  alert("Grades cleared.");
+  if (!confirm("Clear all grades?")) return;
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=clearGrades`);
+    const data = await res.json();
+    if (data.success) {
+      allGrades = [];
+      renderTable([]);
+      alert("Grades cleared!");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Failed to clear grades");
+  }
 }
-
-setInterval(() => {
-  dotState = !dotState;
-  document.getElementById("dot").style.backgroundColor = dotState ? "green" : "red";
-  fetchGrades();
-}, 1000);
-
-window.addEventListener("DOMContentLoaded", () => {
-  fetchStudentCode();
-  fetchGrades();
-});
 </script>
 
 </body>
