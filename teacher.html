@@ -20,7 +20,7 @@ th,td { text-align:left; padding:12px; }
 th { background:#4a90e2; color:white; position:sticky; top:0; }
 tr:nth-child(even){background:#f2f2f2;}
 tr:hover{background:#e8f0fe;}
-.entry-count { text-align:right; margin-bottom:10px; color:#555; font-weight:500; }
+.entry-count { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; color:#555; font-weight:500; }
 .entry-count button { background:#4a90e2; color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; margin-left:10px; font-size:0.85em; }
 .entry-count button:hover { background:#357ab8; }
 </style>
@@ -43,8 +43,22 @@ tr:hover{background:#e8f0fe;}
 </div>
 
 <div class="entry-count">
-  Total Entries: <span id="entryCount">0</span>
-  <button id="toggleColumnsBtn">Hide ID & Score</button>
+  <div>
+    Show Class:
+    <select id="classFilter">
+      <option value="All">All</option>
+      <option value="1st">1st</option>
+      <option value="3rd">3rd</option>
+      <option value="4th">4th</option>
+      <option value="5th">5th</option>
+      <option value="6th">6th</option>
+      <option value="7th">7th</option>
+    </select>
+  </div>
+  <div>
+    Total Entries: <span id="entryCount">0</span>
+    <button id="toggleColumnsBtn">Hide ID & Score</button>
+  </div>
 </div>
 
 <table id="gradesTable">
@@ -68,6 +82,8 @@ const dot = document.getElementById("updateDot");
 let dotState = false;
 let columnsHidden = false;
 const toggleBtn = document.getElementById("toggleColumnsBtn");
+const classFilter = document.getElementById("classFilter");
+let allGrades = []; // store all fetched grades for filtering
 
 // --------------------- Fetch Student Code ---------------------
 async function fetchStudentCode(){
@@ -96,17 +112,29 @@ async function fetchGrades(){
   try{
     const res = await fetch(`${SCRIPT_URL}?action=getGrades`);
     const data = await res.json();
-    const tbody = document.querySelector("#gradesTable tbody");
-    tbody.innerHTML = "";
-    data.forEach(row=>{
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${row.Timestamp||""}</td><td>${row.Class||""}</td><td>${row.StudentID||""}</td><td>${row.FirstName||""}</td><td>${row.LastName||""}</td><td>${row.Score||""}</td>`;
-      tbody.appendChild(tr);
-    });
-    document.getElementById("entryCount").textContent = data.length;
-    // Apply column toggle if active
-    if(columnsHidden) toggleColumns(true);
+    allGrades = data; // save all grades
+    renderTable();
   } catch(err){ console.error(err); }
+}
+
+// --------------------- Render Table with Filter ---------------------
+function renderTable(){
+  const tbody = document.querySelector("#gradesTable tbody");
+  tbody.innerHTML = "";
+
+  const selectedClass = classFilter.value;
+  const filtered = selectedClass === "All"
+    ? allGrades
+    : allGrades.filter(row => row.Class === selectedClass);
+
+  filtered.forEach(row=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${row.Timestamp||""}</td><td>${row.Class||""}</td><td>${row.StudentID||""}</td><td>${row.FirstName||""}</td><td>${row.LastName||""}</td><td>${row.Score||""}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("entryCount").textContent = filtered.length;
+  if(columnsHidden) toggleColumns(true);
 }
 
 // --------------------- Download CSV ---------------------
@@ -155,6 +183,9 @@ setInterval(()=>{
   dot.style.backgroundColor = dotState ? "green" : "red";
   fetchGrades();
 }, 1000);
+
+// --------------------- Class Filter Change ---------------------
+classFilter.addEventListener("change", renderTable);
 
 // --------------------- Initial Load ---------------------
 window.addEventListener("DOMContentLoaded", ()=>{
