@@ -77,6 +77,12 @@
       <label for="classFilter">Filter Class:</label>
       <select id="classFilter" onchange="filterClass()">
         <option value="All">All</option>
+        <option value="1st">1st</option>
+        <option value="3rd">3rd</option>
+        <option value="4th">4th</option>
+        <option value="5th">5th</option>
+        <option value="6th">6th</option>
+        <option value="7th">7th</option>
       </select>
       <button onclick="toggleColumns()">Hide/Show Columns</button>
       <span id="entryCount" style="font-weight: 500;">Entries: 0</span>
@@ -106,7 +112,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // Replace with your actual deployed Apps Script URL
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPZmQPtthZ-pDI0ayvSiO3_-w9u7nLScIZQtg1JILhrwu77N9CJeYoGGQeNY4HePVvNQ/exec"; // Replace with your deployed Apps Script URL
 let hideColumns = false;
 let allGrades = [];
 
@@ -148,18 +154,6 @@ async function loadGrades() {
     const res = await fetch(`${SCRIPT_URL}?action=getGrades`);
     const data = await res.json();
     allGrades = data;
-
-    const classSet = new Set(["All"]);
-    data.forEach(row => { if (row.className) classSet.add(row.className); });
-    const filterSelect = document.getElementById("classFilter");
-    filterSelect.innerHTML = "";
-    classSet.forEach(cls => {
-      const opt = document.createElement("option");
-      opt.value = cls;
-      opt.textContent = cls;
-      filterSelect.appendChild(opt);
-    });
-
     renderTable(data);
   } catch (err) {
     console.error("Error loading grades:", err);
