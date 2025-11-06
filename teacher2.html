@@ -2,69 +2,63 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Teacher Tools</title>
+<title>Teacher Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 body { font-family:"Roboto",sans-serif; background:#f5f7fa; margin:0; padding:0; }
-.container { max-width:900px; margin:50px auto; background:white; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.1); padding:30px 40px; }
+.container { max-width:1000px; margin:40px auto; background:white; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.1); padding:30px; }
 h1 { text-align:center; color:#333; margin-bottom:20px; }
-.status-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; }
-.dot { height:16px; width:16px; border-radius:50%; background:red; transition:0.4s; margin-top:5px; }
-.code-box { font-size:1.4em; font-weight:700; color:#333; background:#e9eef5; border-radius:8px; padding:10px 20px; display:inline-block; margin-top:5px; }
-.controls { display:flex; gap:15px; flex-wrap:wrap; justify-content:center; margin-bottom:15px; }
-input[type="text"], select { padding:10px; border-radius:6px; border:1px solid #ccc; width:200px; font-size:1em; }
-button { padding:10px 16px; border:none; border-radius:6px; background:#4a90e2; color:white; cursor:pointer; font-weight:500; transition:0.3s; }
+.controls { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-bottom:15px; }
+input, select { padding:8px; border:1px solid #ccc; border-radius:6px; font-size:1em; }
+button { padding:8px 14px; border:none; border-radius:6px; background:#4a90e2; color:white; font-weight:500; cursor:pointer; transition:0.3s; }
 button:hover { background:#357ab8; }
 table { width:100%; border-collapse:collapse; font-size:0.95em; margin-top:10px; }
-th,td { text-align:left; padding:12px; }
-th { background:#4a90e2; color:white; position:sticky; top:0; }
-tr:nth-child(even){background:#f2f2f2;}
-tr:hover{background:#e8f0fe;}
+th, td { padding:10px; border-bottom:1px solid #ddd; text-align:left; }
+th { background:#4a90e2; color:white; }
+tr:nth-child(even){background:#f9f9f9;}
 .entry-count { text-align:right; margin-bottom:10px; color:#555; font-weight:500; }
-.entry-count button { background:#4a90e2; color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; margin-left:10px; font-size:0.85em; }
-.entry-count button:hover { background:#357ab8; }
+.entry-count button { margin-left:10px; font-size:0.85em; }
 </style>
 </head>
 <body>
 <div class="container">
-<h1>Teacher Tools</h1>
-
-<div class="status-bar">
-  <div class="code-box">Student Code: <span id="studentCodeDisplay">Loading...</span></div>
-  <div class="dot" id="updateDot"></div>
-</div>
+<h1>Teacher Dashboard</h1>
 
 <div class="controls">
   <input type="text" id="studentCodeInput" placeholder="Set New Student Code">
-  <button onclick="updateStudentCode()">Set Code</button>
+  <button onclick="updateCode()">Set Code</button>
+  <div>Current Code: <b id="currentCode">Loading...</b></div>
+</div>
+
+<div class="controls">
+  <select id="unitSelect">
+    <option value="Unit1">Unit 1</option>
+    <option value="Unit2">Unit 2</option>
+    <option value="Unit3">Unit 3</option>
+  </select>
+  <select id="hwSelect">
+    <option value="HW1">Homework 1</option>
+    <option value="HW2">Homework 2</option>
+    <option value="HW3">Homework 3</option>
+  </select>
+  <button onclick="loadGrades()">Load Grades</button>
   <input type="text" id="csvNameInput" placeholder="CSV Filename">
   <button onclick="downloadCSV()">Download CSV</button>
   <button onclick="clearGrades()">Clear Grades</button>
-  <select id="classFilter" onchange="filterByClass()">
-    <option value="">All Classes</option>
-    <option value="1st">1st</option>
-    <option value="3rd">3rd</option>
-    <option value="4th">4th</option>
-    <option value="5th">5th</option>
-    <option value="6th">6th</option>
-    <option value="7th">7th</option>
-  </select>
-</div>
-
-<div class="entry-count">
-  Total Students: <span id="entryCount">0</span>
   <button id="toggleColumnsBtn">Hide ID & Score</button>
 </div>
+
+<div class="entry-count">Total Entries: <span id="entryCount">0</span></div>
 
 <table id="gradesTable">
 <thead>
 <tr>
+<th>Timestamp</th>
 <th>Class</th>
 <th>StudentID</th>
 <th>First Name</th>
 <th>Last Name</th>
 <th>Score</th>
-<th>Submitted</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -72,107 +66,79 @@ tr:hover{background:#e8f0fe;}
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLVmYDPgo6y1XAkQxmC-f0mYX7Gliz0R6JTiVlATz5bYqiyzTpyMK7jqfWYrbgZ_4f/exec";
-const dot = document.getElementById("updateDot");
-let dotState = false;
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec";
 let columnsHidden = false;
-let allData = [];
 
-async function fetchStudentCode(){
-  try{
-    const res = await fetch(`${SCRIPT_URL}?action=getCode`);
-    const data = await res.json();
-    document.getElementById("studentCodeDisplay").textContent = data.code || "Not Set";
-  } catch(err){ console.error(err); document.getElementById("studentCodeDisplay").textContent="Error"; }
+async function fetchCode(){
+  const res = await fetch(`${SCRIPT_URL}?action=getCode`);
+  const data = await res.json();
+  document.getElementById("currentCode").textContent = data.code || "Not Set";
 }
 
-async function updateStudentCode(){
+async function updateCode(){
   const newCode = document.getElementById("studentCodeInput").value.trim();
-  if(!newCode) return alert("Enter a valid student code.");
-  const payload = { action:"setCode", code:newCode };
-  const res = await fetch(SCRIPT_URL, { method:"POST", body:JSON.stringify(payload) });
-  const data = await res.json();
-  if(data.success){ document.getElementById("studentCodeDisplay").textContent=newCode; alert("Student code updated!"); }
+  if(!newCode) return alert("Enter valid code.");
+  await fetch(SCRIPT_URL, { method:"POST", body:JSON.stringify({ action:"setCode", code:newCode }) });
+  fetchCode();
+  alert("Code updated!");
 }
 
-async function fetchGrades(){
-  const res = await fetch(`${SCRIPT_URL}?action=getGrades`);
+async function loadGrades(){
+  const unit = document.getElementById("unitSelect").value;
+  const hw = document.getElementById("hwSelect").value;
+  const res = await fetch(`${SCRIPT_URL}?action=getGrades&unit=${unit}&hw=${hw}`);
   const data = await res.json();
-  allData = data;
-  renderTable();
-}
-
-function renderTable(){
-  const classFilter = document.getElementById("classFilter").value;
   const tbody = document.querySelector("#gradesTable tbody");
   tbody.innerHTML = "";
-
-  let filtered = allData;
-  if (classFilter) filtered = allData.filter(r => r.Class === classFilter);
-
-  filtered.sort((a,b)=> (a.LastName||"").localeCompare(b.LastName||""));
-
-  filtered.forEach(row=>{
+  data.forEach(row=>{
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${row.Class||""}</td>
-      <td>${row.StudentID||""}</td>
-      <td>${row.FirstName||""}</td>
-      <td>${row.LastName||""}</td>
-      <td>${row.Score||""}</td>
-      <td>${row.Submitted||""}</td>
-    `;
+    tr.innerHTML = `<td>${row.Timestamp||""}</td><td>${row.Class||""}</td><td>${row.StudentID||""}</td><td>${row.FirstName||""}</td><td>${row.LastName||""}</td><td>${row.Score||""}</td>`;
     tbody.appendChild(tr);
   });
-
-  document.getElementById("entryCount").textContent = filtered.length;
-  if(columnsHidden) toggleColumns(true);
+  document.getElementById("entryCount").textContent = data.length;
 }
 
-function filterByClass(){ renderTable(); }
-
 async function downloadCSV(){
-  const filename = document.getElementById("csvNameInput").value.trim() || "grades.csv";
-  const res = await fetch(`${SCRIPT_URL}?action=downloadCSV`);
+  const unit = document.getElementById("unitSelect").value;
+  const hw = document.getElementById("hwSelect").value;
+  const filename = document.getElementById("csvNameInput").value.trim() || `${unit}_${hw}.csv`;
+  const res = await fetch(`${SCRIPT_URL}?action=downloadCSV&unit=${unit}&hw=${hw}`);
   const csv = await res.text();
   const blob = new Blob([csv], { type:"text/csv" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = filename;
   link.click();
+  URL.revokeObjectURL(link.href);
 }
 
 async function clearGrades(){
-  if(!confirm("Are you sure you want to clear all grades?")) return;
-  await fetch(`${SCRIPT_URL}?action=clearGrades`);
-  await fetchGrades();
-  alert("Grades cleared.");
+  const unit = document.getElementById("unitSelect").value;
+  const hw = document.getElementById("hwSelect").value;
+  if(!confirm(`Clear all grades for ${unit} - ${hw}?`)) return;
+  await fetch(`${SCRIPT_URL}?action=clearGrades&unit=${unit}&hw=${hw}`);
+  loadGrades();
+  alert("Grades cleared!");
 }
 
 function toggleColumns(hide){
   const table = document.getElementById("gradesTable");
-  const colIndices = [1,4];
+  const colIndices = [2,5];
   for(let row of table.rows){
     for(let idx of colIndices){
       if(row.cells[idx]) row.cells[idx].style.display = hide ? "none" : "";
     }
   }
 }
-document.getElementById("toggleColumnsBtn").addEventListener("click", ()=>{
+document.getElementById("toggleColumnsBtn").addEventListener("click",()=>{
   columnsHidden = !columnsHidden;
   toggleColumns(columnsHidden);
   document.getElementById("toggleColumnsBtn").textContent = columnsHidden ? "Show ID & Score" : "Hide ID & Score";
 });
 
-setInterval(()=>{
-  dotState = !dotState;
-  dot.style.backgroundColor = dotState ? "green" : "red";
-  fetchGrades();
-}, 4000);
-
 window.addEventListener("DOMContentLoaded", ()=>{
-  fetchStudentCode();
-  fetchGrades();
+  fetchCode();
+  loadGrades();
 });
 </script>
 </body>
