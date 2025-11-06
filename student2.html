@@ -52,7 +52,15 @@ h2 {
 
 <h2>Submit Your Grade</h2>
 
-<div class="card">
+<!-- Landing page -->
+<div id="landingPage" class="card">
+  <label>Enter Student Code:</label>
+  <input type="text" id="studentCodeInput" maxlength="6" placeholder="Enter code">
+  <button onclick="verifyCode()">Continue</button>
+</div>
+
+<!-- Main submission page -->
+<div id="mainPage" class="card" style="display:none;">
   <label>Student ID (6 digits):</label>
   <input type="number" id="studentIdInput" min="0" max="999999" placeholder="123456">
 
@@ -94,8 +102,29 @@ h2 {
 </div>
 
 <script>
-const SCRIPT_URL = "YOUR_DEPLOYED_APP_SCRIPT_URL_HERE";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec";
 
+// -------------------- Landing Page --------------------
+async function verifyCode() {
+  const code = document.getElementById("studentCodeInput").value.trim();
+  if (!code) return alert("Enter student code");
+
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=verifyCode&code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+    if (data.valid) {
+      document.getElementById("landingPage").style.display = "none";
+      document.getElementById("mainPage").style.display = "block";
+    } else {
+      alert("Invalid student code");
+    }
+  } catch(err) {
+    console.error(err);
+    alert("Error verifying code");
+  }
+}
+
+// -------------------- Submit Grade --------------------
 async function submitGrade() {
   const studentId = document.getElementById("studentIdInput").value.trim();
   const unit = document.getElementById("unitSelect").value;
@@ -103,10 +132,10 @@ async function submitGrade() {
   const grade = document.getElementById("gradeInput").value.trim();
   const successMsg = document.getElementById("successMsg");
 
-  if(!studentId) return alert("Enter Student ID");
-  if(!unit) return alert("Select Unit");
-  if(!homework) return alert("Select Homework");
-  if(!grade) return alert("Enter Grade");
+  if (!studentId) return alert("Enter Student ID");
+  if (!unit) return alert("Select Unit");
+  if (!homework) return alert("Select Homework");
+  if (!grade) return alert("Enter Grade");
 
   try {
     const payload = { action:"submitGrade", studentId, unit, homework, grade };
@@ -117,12 +146,11 @@ async function submitGrade() {
     const data = await res.json();
 
     if(data.status === "success") {
-      // Show countdown success message
       let count = 3;
       successMsg.textContent = `Grade submitted! (${count})`;
       const interval = setInterval(() => {
         count--;
-        if(count > 0) {
+        if (count > 0) {
           successMsg.textContent = `Grade submitted! (${count})`;
         } else {
           successMsg.textContent = "";
@@ -130,7 +158,6 @@ async function submitGrade() {
         }
       }, 1000);
 
-      // Clear inputs for next entry
       document.getElementById("studentIdInput").value = "";
       document.getElementById("gradeInput").value = "";
       document.getElementById("unitSelect").selectedIndex = 0;
