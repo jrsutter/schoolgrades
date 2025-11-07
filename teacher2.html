@@ -1,158 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Teacher Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-body { font-family:"Roboto",sans-serif; background:#f5f7fa; margin:0; padding:0; }
-.container { max-width:1000px; margin:40px auto; background:white; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.1); padding:30px; }
-h1 { text-align:center; color:#333; margin-bottom:20px; }
-.controls { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-bottom:15px; }
-input, select { padding:8px; border:1px solid #ccc; border-radius:6px; font-size:1em; }
-button { padding:8px 14px; border:none; border-radius:6px; background:#4a90e2; color:white; font-weight:500; cursor:pointer; transition:0.3s; }
-button:hover { background:#357ab8; }
-table { width:100%; border-collapse:collapse; font-size:0.95em; margin-top:10px; }
-th, td { padding:10px; border-bottom:1px solid #ddd; text-align:left; }
-th { background:#4a90e2; color:white; }
-tr:nth-child(even){background:#f9f9f9;}
-.entry-count { text-align:right; margin-bottom:10px; color:#555; font-weight:500; }
-.entry-count button { margin-left:10px; font-size:0.85em; }
-</style>
+  <meta charset="UTF-8">
+  <title>Teacher Dashboard</title>
+  <style>
+    body { font-family: Arial; background: #f9fafc; padding: 20px; }
+    h1 { color: #1a73e8; text-align: center; }
+    .controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; }
+    select, input, button { padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
+    button { background: #1a73e8; color: white; cursor: pointer; }
+    button:hover { background: #155fc4; }
+    #refreshCircle { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin-left: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #e8f0fe; }
+  </style>
 </head>
 <body>
-<div class="container">
-<h1>Teacher Dashboard</h1>
+  <h1>Teacher Dashboard</h1>
+  <div class="controls">
+    <select id="unit"><option value="">Unit</option></select>
+    <select id="homework"><option value="">Homework</option></select>
+    <select id="classFilter"><option value="">Class</option></select>
+    <button id="refresh">Refresh</button>
+    <button id="toggle">Hide ID & Score</button>
+    <input id="csvName" placeholder="CSV file name">
+    <button id="download">Download CSV</button>
+  </div>
 
-<div class="controls">
-  <input type="text" id="studentCodeInput" placeholder="Set New Student Code">
-  <button onclick="updateCode()">Set Code</button>
-  <div>Current Code: <b id="currentCode">Loading...</b></div>
-</div>
+  <div class="controls">
+    <label>Current Code:</label> <span id="currentCode">Loading...</span>
+    <input id="newCode" placeholder="New code">
+    <button id="setCode">Set New Code</button>
+    <div id="refreshCircle" style="background:red;"></div>
+  </div>
 
-<div class="controls">
-  <select id="unitSelect">
-    <option value="Unit1">Unit 1</option>
-    <option value="Unit2">Unit 2</option>
-    <option value="Unit3">Unit 3A</option>
-    <option value="Unit4">Unit 3B</option>
-    <option value="Unit5">Unit 4A</option>
-    <option value="Unit6">Unit 4B</option>
-    <option value="Unit1">Unit 5A</option>
-    <option value="Unit2">Unit 5B</option>
-    <option value="Unit3">Unit 6</option>
-    <option value="Unit4">Unit 8</option>
-    <option value="Unit5">Unit 7A</option>
-    <option value="Unit6">Unit 7B</option>
-  </select>
-  <select id="hwSelect">
-    <option value="HW1">Homework 1</option>
-    <option value="HW2">Homework 2</option>
-    <option value="HW3">Homework 3</option>
-    <option value="HW1">Homework 4</option>
-    <option value="HW2">Homework 5</option>
-    <option value="HW3">Homework 6</option>
-    <option value="HW3">Homework 7</option>
-  </select>
-  <button onclick="loadGrades()">Load Grades</button>
-  <input type="text" id="csvNameInput" placeholder="CSV Filename">
-  <button onclick="downloadCSV()">Download CSV</button>
-  <button onclick="clearGrades()">Clear Grades</button>
-  <button id="toggleColumnsBtn">Hide ID & Score</button>
-</div>
+  <table id="gradesTable"><thead></thead><tbody></tbody></table>
 
-<div class="entry-count">Total Entries: <span id="entryCount">0</span></div>
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec"; // Replace this
 
-<table id="gradesTable">
-<thead>
-<tr>
-<th>Timestamp</th>
-<th>Class</th>
-<th>StudentID</th>
-<th>First Name</th>
-<th>Last Name</th>
-<th>Score</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
+    const units = ["Unit 1","Unit 2","Unit 3A","Unit 3B","Unit 4A","Unit 4B","Unit 5A","Unit 5B","Unit 6","Unit 7A","Unit 7B","Unit 8"];
+    const hws = ["HW1","HW2","HW3","HW4","HW5","HW6","HW7","HW8"];
+    const classes = ["1","2","3","4","5","6","7"];
 
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec";
-let columnsHidden = false;
+    units.forEach(u => unit.innerHTML += `<option>${u}</option>`);
+    hws.forEach(h => homework.innerHTML += `<option>${h}</option>`);
+    classes.forEach(c => classFilter.innerHTML += `<option>${c}</option>`);
 
-async function fetchCode(){
-  const res = await fetch(`${SCRIPT_URL}?action=getCode`);
-  const data = await res.json();
-  document.getElementById("currentCode").textContent = data.code || "Not Set";
-}
+    let hide = false;
 
-async function updateCode(){
-  const newCode = document.getElementById("studentCodeInput").value.trim();
-  if(!newCode) return alert("Enter valid code.");
-  await fetch(SCRIPT_URL, { method:"POST", body:JSON.stringify({ action:"setCode", code:newCode }) });
-  fetchCode();
-  alert("Code updated!");
-}
+    async function loadGrades() {
+      if (!unit.value || !homework.value) return;
+      refreshCircle.style.background = refreshCircle.style.background === "red" ? "green" : "red";
 
-async function loadGrades(){
-  const unit = document.getElementById("unitSelect").value;
-  const hw = document.getElementById("hwSelect").value;
-  const res = await fetch(`${SCRIPT_URL}?action=getGrades&unit=${unit}&hw=${hw}`);
-  const data = await res.json();
-  const tbody = document.querySelector("#gradesTable tbody");
-  tbody.innerHTML = "";
-  data.forEach(row=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${row.Timestamp||""}</td><td>${row.Class||""}</td><td>${row.StudentID||""}</td><td>${row.FirstName||""}</td><td>${row.LastName||""}</td><td>${row.Score||""}</td>`;
-    tbody.appendChild(tr);
-  });
-  document.getElementById("entryCount").textContent = data.length;
-}
+      const payload = {
+        action: "getGrades",
+        unit: unit.value,
+        homework: homework.value,
+        classFilter: classFilter.value
+      };
 
-async function downloadCSV(){
-  const unit = document.getElementById("unitSelect").value;
-  const hw = document.getElementById("hwSelect").value;
-  const filename = document.getElementById("csvNameInput").value.trim() || `${unit}_${hw}.csv`;
-  const res = await fetch(`${SCRIPT_URL}?action=downloadCSV&unit=${unit}&hw=${hw}`);
-  const csv = await res.text();
-  const blob = new Blob([csv], { type:"text/csv" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(link.href);
-}
+      const res = await fetch(SCRIPT_URL, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload)});
+      const data = await res.json();
+      if (!data.success) return alert("Error: " + data.message);
 
-async function clearGrades(){
-  const unit = document.getElementById("unitSelect").value;
-  const hw = document.getElementById("hwSelect").value;
-  if(!confirm(`Clear all grades for ${unit} - ${hw}?`)) return;
-  await fetch(`${SCRIPT_URL}?action=clearGrades&unit=${unit}&hw=${hw}`);
-  loadGrades();
-  alert("Grades cleared!");
-}
+      const rows = data.data;
+      if (!rows.length) { gradesTable.innerHTML = "<tr><td>No data</td></tr>"; return; }
 
-function toggleColumns(hide){
-  const table = document.getElementById("gradesTable");
-  const colIndices = [2,5];
-  for(let row of table.rows){
-    for(let idx of colIndices){
-      if(row.cells[idx]) row.cells[idx].style.display = hide ? "none" : "";
+      const headers = ["Timestamp","ID","First Name","Last Name","Class","Score"];
+      gradesTable.querySelector("thead").innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
+      gradesTable.querySelector("tbody").innerHTML = rows.map(r => 
+        `<tr>${r.map((v,i)=> hide && (i===1||i===5) ? "<td>Hidden</td>" : `<td>${v}</td>`).join("")}</tr>`
+      ).join("");
     }
-  }
-}
-document.getElementById("toggleColumnsBtn").addEventListener("click",()=>{
-  columnsHidden = !columnsHidden;
-  toggleColumns(columnsHidden);
-  document.getElementById("toggleColumnsBtn").textContent = columnsHidden ? "Show ID & Score" : "Hide ID & Score";
-});
 
-window.addEventListener("DOMContentLoaded", ()=>{
-  fetchCode();
-  loadGrades();
-});
-</script>
+    refresh.onclick = loadGrades;
+    toggle.onclick = () => { hide=!hide; loadGrades(); };
+
+    download.onclick = () => {
+      if (!gradesTable.querySelector("tbody").innerHTML) return alert("No data");
+      const name = csvName.value || "grades";
+      let csv = "";
+      document.querySelectorAll("table tr").forEach(row=>{
+        let cols = [...row.querySelectorAll("th,td")].map(c=>c.innerText.replace(/,/g,""));
+        csv += cols.join(",") + "\n";
+      });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = name + ".csv"; a.click();
+    };
+
+    setInterval(loadGrades, 5000); // auto refresh every 5 sec
+
+    // Load and update code
+    setCode.onclick = async () => {
+      if (!newCode.value) return;
+      const res = await fetch(SCRIPT_URL, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ action:"updateCode", newCode:newCode.value })
+      });
+      const data = await res.json();
+      currentCode.textContent = data.code;
+      newCode.value = "";
+    };
+  </script>
 </body>
 </html>
