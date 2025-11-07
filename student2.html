@@ -1,176 +1,164 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student Grade Submission</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-<style>
-body {
-  font-family: 'Roboto', sans-serif;
-  background: #f3f4f6;
-  margin: 0;
-  padding: 20px;
-}
-h2 {
-  text-align: center;
-  color: #333;
-}
-.card {
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  max-width: 500px;
-  margin: 20px auto;
-}
-.card input, .card select {
-  width: calc(100% - 16px);
-  padding: 8px;
-  margin: 6px 0;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-.card button {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-.card button:hover { background: #0056b3; }
-.success {
-  color: green;
-  font-weight: 500;
-  margin-top: 10px;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Student Grade Submission</title>
+  <style>
+    body {
+      font-family: "Google Sans", Arial, sans-serif;
+      margin: 0;
+      padding: 30px;
+      background: #f5f7fa;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #1a73e8;
+    }
+    form {
+      max-width: 400px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 600;
+    }
+    select, input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-top: 5px;
+      font-size: 15px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1669c1;
+    }
+    #message {
+      text-align: center;
+      font-weight: 600;
+      margin-top: 15px;
+      color: green;
+      font-size: 18px;
+      transition: opacity 0.3s ease;
+    }
+    #message.error {
+      color: red;
+    }
+  </style>
 </head>
 <body>
+  <h1>Submit Your Grade</h1>
+  <form id="gradeForm">
+    <label>Student ID:</label>
+    <input type="text" id="studentId" required>
 
-<h2>Submit Your Grade</h2>
+    <label>Unit:</label>
+    <select id="unit" required>
+      <option value="">Select Unit</option>
+      <option value="Unit 1">Unit 1</option>
+      <option value="Unit 2">Unit 2</option>
+      <option value="Unit 3A">Unit 3A</option>
+      <option value="Unit 3B">Unit 3B</option>
+      <option value="Unit 4A">Unit 4A</option>
+      <option value="Unit 4B">Unit 4B</option>
+      <option value="Unit 5A">Unit 5A</option>
+      <option value="Unit 5B">Unit 5B</option>
+      <option value="Unit 6">Unit 6</option>
+      <option value="Unit 7A">Unit 7A</option>
+      <option value="Unit 7B">Unit 7B</option>
+      <option value="Unit 8">Unit 8</option>
+    </select>
 
-<!-- Landing page -->
-<div id="landingPage" class="card">
-  <label>Enter Student Code:</label>
-  <input type="text" id="studentCodeInput" maxlength="6" placeholder="Enter code">
-  <button onclick="verifyCode()">Continue</button>
-</div>
+    <label>Homework:</label>
+    <select id="homework" required>
+      <option value="">Select Homework</option>
+      <option value="HW1">HW1</option>
+      <option value="HW2">HW2</option>
+      <option value="HW3">HW3</option>
+      <option value="HW4">HW4</option>
+      <option value="HW5">HW5</option>
+      <option value="HW6">HW6</option>
+      <option value="HW7">HW7</option>
+      <option value="HW8">HW8</option>
+    </select>
 
-<!-- Main submission page -->
-<div id="mainPage" class="card" style="display:none;">
-  <label>Student ID (6 digits):</label>
-  <input type="number" id="studentIdInput" min="0" max="999999" placeholder="123456">
+    <label>Score:</label>
+    <input type="number" id="score" min="0" max="100" required>
 
-  <label>Unit:</label>
-  <select id="unitSelect">
-    <option value="">Select Unit</option>
-    <option>Unit 1</option>
-    <option>Unit 2</option>
-    <option>Unit 3A</option>
-    <option>Unit 3B</option>
-    <option>Unit 4A</option>
-    <option>Unit 4B</option>
-    <option>Unit 5A</option>
-    <option>Unit 5B</option>
-    <option>Unit 6</option>
-    <option>Unit 8</option>
-    <option>Unit 7A</option>
-    <option>Unit 7B</option>
-  </select>
+    <button type="submit">Submit Grade</button>
 
-  <label>Homework:</label>
-  <select id="homeworkSelect">
-    <option value="">Select Homework</option>
-    <option>1</option>
-    <option>2</option>
-    <option>3</option>
-    <option>4</option>
-    <option>5</option>
-    <option>6</option>
-    <option>7</option>
-    <option>8</option>
-  </select>
+    <div id="message"></div>
+  </form>
 
-  <label>Grade:</label>
-  <input type="number" id="gradeInput" min="0" max="100" placeholder="Enter score">
+  <script>
+    const form = document.getElementById("gradeForm");
+    const msg = document.getElementById("message");
 
-  <button onclick="submitGrade()">Submit</button>
-  <div id="successMsg" class="success"></div>
-</div>
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec";
+      msg.textContent = "Submitting...";
+      msg.classList.remove("error");
+      msg.style.color = "#1a73e8";
 
-// -------------------- Landing Page --------------------
-async function verifyCode() {
-  const code = document.getElementById("studentCodeInput").value.trim();
-  if (!code) return alert("Enter student code");
+      const payload = {
+        studentId: document.getElementById("studentId").value.trim(),
+        unit: document.getElementById("unit").value,
+        homework: document.getElementById("homework").value,
+        score: document.getElementById("score").value
+      };
 
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=verifyCode&code=${encodeURIComponent(code)}`);
-    const data = await res.json();
-    if (data.valid) {
-      document.getElementById("landingPage").style.display = "none";
-      document.getElementById("mainPage").style.display = "block";
-    } else {
-      alert("Invalid student code");
-    }
-  } catch(err) {
-    console.error(err);
-    alert("Error verifying code");
-  }
-}
+      try {
+        const response = await fetch("/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
 
-// -------------------- Submit Grade --------------------
-async function submitGrade() {
-  const studentId = document.getElementById("studentIdInput").value.trim();
-  const unit = document.getElementById("unitSelect").value;
-  const homework = document.getElementById("homeworkSelect").value;
-  const grade = document.getElementById("gradeInput").value.trim();
-  const successMsg = document.getElementById("successMsg");
+        if (result.success) {
+          let count = 3;
+          msg.textContent = `✅ Submission successful! Resetting in ${count}...`;
+          msg.style.color = "green";
 
-  if (!studentId) return alert("Enter Student ID");
-  if (!unit) return alert("Select Unit");
-  if (!homework) return alert("Select Homework");
-  if (!grade) return alert("Enter Grade");
+          const countdown = setInterval(() => {
+            count--;
+            if (count > 0) {
+              msg.textContent = `✅ Submission successful! Resetting in ${count}...`;
+            } else {
+              clearInterval(countdown);
+              msg.textContent = "";
+              form.reset();
+            }
+          }, 1000);
 
-  try {
-    const payload = { action:"submitGrade", studentId, unit, homework, grade };
-    const res = await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-
-    if(data.status === "success") {
-      let count = 3;
-      successMsg.textContent = `Grade submitted! (${count})`;
-      const interval = setInterval(() => {
-        count--;
-        if (count > 0) {
-          successMsg.textContent = `Grade submitted! (${count})`;
         } else {
-          successMsg.textContent = "";
-          clearInterval(interval);
+          msg.textContent = "❌ " + (result.message || "Submission failed.");
+          msg.classList.add("error");
         }
-      }, 1000);
-
-      document.getElementById("studentIdInput").value = "";
-      document.getElementById("gradeInput").value = "";
-      document.getElementById("unitSelect").selectedIndex = 0;
-      document.getElementById("homeworkSelect").selectedIndex = 0;
-    } else {
-      alert("Error submitting grade: " + (data.message || "Unknown error"));
-    }
-  } catch(err) {
-    console.error(err);
-    alert("Error submitting grade");
-  }
-}
-</script>
-
+      } catch (err) {
+        msg.textContent = "❌ Network or server error.";
+        msg.classList.add("error");
+      }
+    });
+  </script>
 </body>
 </html>
