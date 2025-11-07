@@ -1,84 +1,225 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Student Grade Submission</title>
-  <style>
-    body { font-family: Arial; background: #f5f7fa; padding: 30px; }
-    h1 { text-align: center; color: #1a73e8; }
-    form { max-width: 400px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; }
-    label { display: block; margin-top: 10px; font-weight: 600; }
-    input, select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; }
-    button { width: 100%; background: #1a73e8; color: white; border: none; padding: 10px; margin-top: 15px; border-radius: 5px; font-size: 16px; }
-    button:hover { background: #155fc4; }
-    #message { text-align: center; margin-top: 15px; font-weight: bold; }
-  </style>
+<meta charset="UTF-8">
+<title>Student Grade Submission</title>
+<style>
+  body {
+    font-family: "Google Sans", Arial, sans-serif;
+    background: #f2f5f9;
+    margin: 0;
+    padding: 40px;
+    color: #333;
+  }
+  h1 {
+    text-align: center;
+    color: #1a73e8;
+  }
+  .container {
+    max-width: 400px;
+    margin: 0 auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  label {
+    display: block;
+    margin-top: 12px;
+    font-weight: 600;
+  }
+  input, select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    margin-top: 5px;
+  }
+  button {
+    margin-top: 20px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background: #1a73e8;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #1669c1;
+  }
+  #message {
+    text-align: center;
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 17px;
+  }
+  #message.error {
+    color: red;
+  }
+  #message.success {
+    color: green;
+  }
+  #gradeForm {
+    display: none; /* Hidden until code is verified */
+  }
+</style>
 </head>
 <body>
-  <h1>Submit Your Grade</h1>
+
+<h1>Grade Submission</h1>
+
+<div class="container">
+
+  <!-- Landing Page -->
+  <div id="loginSection">
+    <label>Enter Class Code:</label>
+    <input type="password" id="accessCode" placeholder="Enter access code" required>
+    <button id="loginButton">Continue</button>
+    <div id="loginMessage"></div>
+  </div>
+
+  <!-- Submission Form -->
   <form id="gradeForm">
-    <label>Student ID</label>
-    <input id="studentId" required>
+    <label>Student ID:</label>
+    <input type="text" id="studentId" required>
 
-    <label>Unit</label>
+    <label>Unit:</label>
     <select id="unit" required>
-      <option value="">Select</option>
-      <option>Unit 1</option><option>Unit 2</option><option>Unit 3A</option>
-      <option>Unit 3B</option><option>Unit 4A</option><option>Unit 4B</option>
-      <option>Unit 5A</option><option>Unit 5B</option><option>Unit 6</option>
-      <option>Unit 7A</option><option>Unit 7B</option><option>Unit 8</option>
+      <option value="">Select Unit</option>
+      <option value="Unit 1">Unit 1</option>
+      <option value="Unit 2">Unit 2</option>
+      <option value="Unit 3A">Unit 3A</option>
+      <option value="Unit 3B">Unit 3B</option>
+      <option value="Unit 4A">Unit 4A</option>
+      <option value="Unit 4B">Unit 4B</option>
+      <option value="Unit 5A">Unit 5A</option>
+      <option value="Unit 5B">Unit 5B</option>
+      <option value="Unit 6">Unit 6</option>
+      <option value="Unit 7A">Unit 7A</option>
+      <option value="Unit 7B">Unit 7B</option>
+      <option value="Unit 8">Unit 8</option>
     </select>
 
-    <label>Homework</label>
+    <label>Homework:</label>
     <select id="homework" required>
-      <option value="">Select</option>
-      <option>HW1</option><option>HW2</option><option>HW3</option>
-      <option>HW4</option><option>HW5</option><option>HW6</option>
-      <option>HW7</option><option>HW8</option>
+      <option value="">Select Homework</option>
+      <option value="HW1">HW1</option>
+      <option value="HW2">HW2</option>
+      <option value="HW3">HW3</option>
+      <option value="HW4">HW4</option>
+      <option value="HW5">HW5</option>
+      <option value="HW6">HW6</option>
+      <option value="HW7">HW7</option>
+      <option value="HW8">HW8</option>
     </select>
 
-    <label>Score</label>
+    <label>Score:</label>
     <input type="number" id="score" min="0" max="100" required>
 
-    <button type="submit">Submit</button>
+    <button type="submit">Submit Grade</button>
     <div id="message"></div>
   </form>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec"; // Replace with your Apps Script Web App URL
+</div>
 
-    const form = document.getElementById("gradeForm");
-    const msg = document.getElementById("message");
+<script>
+  // 🔗 Replace with your deployed Google Apps Script Web App URL
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec";
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      msg.textContent = "Submitting...";
-      const payload = {
-        action: "submit",
-        studentId: studentId.value.trim(),
-        unit: unit.value,
-        homework: homework.value,
-        score: score.value
-      };
+  const loginButton = document.getElementById("loginButton");
+  const loginMessage = document.getElementById("loginMessage");
+  const accessCode = document.getElementById("accessCode");
+  const loginSection = document.getElementById("loginSection");
+  const gradeForm = document.getElementById("gradeForm");
+  const message = document.getElementById("message");
 
-      try {
-        const res = await fetch(SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const result = await res.json();
-        if (result.success) {
-          let c = 3;
-          const timer = setInterval(() => {
-            msg.textContent = `✅ Submitted! Resetting in ${c--}...`;
-            if (c < 0) { clearInterval(timer); msg.textContent = ""; form.reset(); }
-          }, 1000);
-        } else msg.textContent = "❌ " + result.message;
-      } catch {
-        msg.textContent = "❌ Connection error.";
+  let verifiedCode = "";
+
+  // 🧩 Step 1: Verify access code before showing form
+  loginButton.addEventListener("click", async () => {
+    loginMessage.textContent = "Verifying...";
+    loginMessage.style.color = "#1a73e8";
+
+    const code = accessCode.value.trim();
+    if (!code) return showLoginError("Please enter a code.");
+
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verifyCode", code })
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        verifiedCode = code;
+        loginSection.style.display = "none";
+        gradeForm.style.display = "block";
+      } else {
+        showLoginError("Incorrect code. Please try again.");
       }
-    });
-  </script>
+    } catch {
+      showLoginError("Server error. Please try again.");
+    }
+  });
+
+  function showLoginError(msg) {
+    loginMessage.textContent = msg;
+    loginMessage.style.color = "red";
+  }
+
+  // 🧩 Step 2: Submit grade
+  gradeForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    message.textContent = "Submitting...";
+    message.style.color = "#1a73e8";
+
+    const payload = {
+      action: "submit",
+      studentId: document.getElementById("studentId").value.trim(),
+      unit: document.getElementById("unit").value,
+      homework: document.getElementById("homework").value,
+      score: document.getElementById("score").value,
+      code: verifiedCode
+    };
+
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        let count = 3;
+        message.textContent = `✅ Submission successful! Resetting in ${count}...`;
+        message.style.color = "green";
+
+        const countdown = setInterval(() => {
+          count--;
+          if (count > 0) {
+            message.textContent = `✅ Submission successful! Resetting in ${count}...`;
+          } else {
+            clearInterval(countdown);
+            message.textContent = "";
+            gradeForm.reset();
+          }
+        }, 1000);
+      } else {
+        message.textContent = "❌ " + (result.message || "Submission failed.");
+        message.style.color = "red";
+      }
+    } catch (err) {
+      message.textContent = "❌ Network or server error.";
+      message.style.color = "red";
+    }
+  });
+</script>
 </body>
 </html>
