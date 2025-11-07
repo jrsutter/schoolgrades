@@ -2,150 +2,102 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Student Grade Submission</title>
+<title>Student Submission</title>
 <style>
-  body { font-family: Arial; background: #f2f5f9; margin:0; padding:30px; }
-  .container { max-width:400px; margin:auto; background:white; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-  label, input, select, button { display:block; width:100%; margin-top:10px; font-size:15px; }
-  button { background:#1a73e8; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; margin-top:20px;}
-  button:hover { background:#1669c1; }
-  #message { margin-top:15px; text-align:center; font-weight:bold; }
-  #gradeForm { display:none; }
+body { font-family: 'Segoe UI', sans-serif; background:#f2f5f9; }
+.container { max-width:400px; margin:50px auto; background:white; padding:25px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+input, select, button { width:100%; margin-top:10px; padding:10px; border-radius:6px; border:1px solid #ccc; font-size:15px;}
+button { background:#1a73e8; color:white; border:none; cursor:pointer; transition:0.2s;}
+button:hover { background:#1669c1; }
+#message { text-align:center; margin-top:15px; font-weight:bold; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h2>Student Grade Submission</h2>
+<h2>Student Grade Submission</h2>
 
-  <!-- Landing / Code Entry -->
-  <div id="loginSection">
-    <label>Enter Class Code:</label>
-    <input type="text" id="accessCode" placeholder="Enter code">
-    <button id="loginButton">Continue</button>
-    <div id="loginMessage"></div>
-  </div>
+<div id="loginSection">
+<label>Class Code (from Config sheet):</label>
+<input type="text" id="accessCode" placeholder="Enter code">
+<button id="loginButton">Continue</button>
+<div id="loginMessage"></div>
+</div>
 
-  <!-- Grade Form -->
-  <form id="gradeForm">
-    <label>Student ID:</label>
-    <input type="text" id="studentId" required>
-
-    <label>Unit:</label>
-    <select id="unit" required>
-      <option value="">Select Unit</option>
-      <option value="Unit 1">Unit 1</option>
-      <option value="Unit 2">Unit 2</option>
-      <option value="Unit 3A">Unit 3A</option>
-      <option value="Unit 3B">Unit 3B</option>
-      <option value="Unit 4A">Unit 4A</option>
-      <option value="Unit 4B">Unit 4B</option>
-      <option value="Unit 5A">Unit 5A</option>
-      <option value="Unit 5B">Unit 5B</option>
-      <option value="Unit 6">Unit 6</option>
-      <option value="Unit 7A">Unit 7A</option>
-      <option value="Unit 7B">Unit 7B</option>
-      <option value="Unit 8">Unit 8</option>
-    </select>
-
-    <label>Homework:</label>
-    <select id="homework" required>
-      <option value="">Select Homework</option>
-      <option value="HW1">HW1</option>
-      <option value="HW2">HW2</option>
-      <option value="HW3">HW3</option>
-      <option value="HW4">HW4</option>
-      <option value="HW5">HW5</option>
-      <option value="HW6">HW6</option>
-      <option value="HW7">HW7</option>
-      <option value="HW8">HW8</option>
-    </select>
-
-    <label>Score:</label>
-    <input type="number" id="score" min="0" max="100" required>
-
-    <button type="submit">Submit</button>
-    <div id="message"></div>
-  </form>
+<form id="gradeForm">
+<label>Student ID:</label>
+<input type="text" id="studentId" required>
+<label>Unit:</label>
+<select id="unit" required>
+<option value="">Select Unit</option>
+<option>Unit 1</option><option>Unit 2</option><option>Unit 3A</option><option>Unit 3B</option>
+<option>Unit 4A</option><option>Unit 4B</option><option>Unit 5A</option><option>Unit 5B</option>
+<option>Unit 6</option><option>Unit 7A</option><option>Unit 7B</option><option>Unit 8</option>
+</select>
+<label>Homework:</label>
+<select id="homework" required>
+<option value="">Select Homework</option>
+<option>HW1</option><option>HW2</option><option>HW3</option><option>HW4</option>
+<option>HW5</option><option>HW6</option><option>HW7</option><option>HW8</option>
+</select>
+<label>Score:</label>
+<input type="number" id="score" min="0" max="100" required>
+<button type="submit">Submit</button>
+<div id="message"></div>
+</form>
 </div>
 
 <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec"; // <-- replace with your Web App URL
-  const loginButton = document.getElementById("loginButton");
-  const loginMessage = document.getElementById("loginMessage");
-  const accessCode = document.getElementById("accessCode");
-  const loginSection = document.getElementById("loginSection");
-  const gradeForm = document.getElementById("gradeForm");
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec";
+const loginButton = document.getElementById("loginButton");
+const loginSection = document.getElementById("loginSection");
+const gradeForm = document.getElementById("gradeForm");
+let verifiedCode = "";
+
+loginButton.addEventListener("click", async ()=>{
+  const code = document.getElementById("accessCode").value.trim();
+  if(!code) return;
+  document.getElementById("loginMessage").textContent="Verifying...";
+  try{
+    const res = await fetch(SCRIPT_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"verifyCode", code})
+    });
+    const data = await res.json();
+    if(data.success){ verifiedCode=code; loginSection.style.display="none"; gradeForm.style.display="block";}
+    else document.getElementById("loginMessage").textContent="Incorrect code";
+  }catch{document.getElementById("loginMessage").textContent="Server error";}
+});
+
+gradeForm.addEventListener("submit", async e=>{
+  e.preventDefault();
+  const payload={ action:"submit",
+                  studentId:document.getElementById("studentId").value.trim(),
+                  unit:document.getElementById("unit").value,
+                  homework:document.getElementById("homework").value,
+                  score:document.getElementById("score").value,
+                  code:verifiedCode };
   const message = document.getElementById("message");
-
-  let verifiedCode = "";
-
-  // Verify code
-  loginButton.addEventListener("click", async () => {
-    loginMessage.textContent = "Verifying...";
-    const code = accessCode.value.trim();
-    if (!code) { loginMessage.textContent="Enter code."; loginMessage.style.color="red"; return; }
-
-    try {
-      const res = await fetch(SCRIPT_URL, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({action:"verifyCode", code})
-      });
-      const data = await res.json();
-      if (data.success) {
-        verifiedCode = code;
-        loginSection.style.display="none";
-        gradeForm.style.display="block";
-      } else {
-        loginMessage.textContent="Incorrect code.";
-        loginMessage.style.color="red";
-      }
-    } catch {
-      loginMessage.textContent="Server error.";
-      loginMessage.style.color="red";
-    }
-  });
-
-  // Submit grade
-  gradeForm.addEventListener("submit", async e => {
-    e.preventDefault();
-    message.textContent="Submitting...";
-    message.style.color="#1a73e8";
-
-    const payload = {
-      action:"submit",
-      studentId: document.getElementById("studentId").value.trim(),
-      unit: document.getElementById("unit").value,
-      homework: document.getElementById("homework").value,
-      score: document.getElementById("score").value,
-      code: verifiedCode
-    };
-
-    try {
-      const res = await fetch(SCRIPT_URL, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (data.success) {
-        let count = 3;
-        message.style.color="green";
-        message.textContent=`✅ Submission successful! Resetting in ${count}...`;
-        const interval = setInterval(()=>{
-          count--;
-          if(count>0) message.textContent=`✅ Submission successful! Resetting in ${count}...`;
-          else { clearInterval(interval); message.textContent=""; gradeForm.reset(); loginSection.style.display="block"; gradeForm.style.display="none"; accessCode.value=""; }
-        },1000);
-      } else {
-        message.style.color="red";
-        message.textContent="❌ "+(data.message||"Submission failed");
-      }
-    } catch {
-      message.style.color="red";
-      message.textContent="❌ Server error.";
-    }
-  });
+  message.style.color="#1a73e8"; message.textContent="Submitting...";
+  try{
+    const res=await fetch(SCRIPT_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
+    });
+    const data=await res.json();
+    if(data.success){
+      let count=3;
+      message.style.color="green";
+      message.textContent=`✅ Submission successful! Resetting in ${count}...`;
+      const interval = setInterval(()=>{
+        count--;
+        if(count>0) message.textContent=`✅ Submission successful! Resetting in ${count}...`;
+        else { clearInterval(interval); message.textContent=""; gradeForm.reset(); loginSection.style.display="block"; gradeForm.style.display="none"; document.getElementById("accessCode").value=""; }
+      },1000);
+    }else{ message.style.color="red"; message.textContent="❌ "+(data.message||"Submission failed"); }
+  }catch{ message.style.color="red"; message.textContent="❌ Server error"; }
+});
 </script>
 </body>
 </html>
