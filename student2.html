@@ -4,84 +4,28 @@
 <meta charset="UTF-8">
 <title>Student Grade Submission</title>
 <style>
-  body {
-    font-family: "Google Sans", Arial, sans-serif;
-    background: #f2f5f9;
-    margin: 0;
-    padding: 40px;
-    color: #333;
-  }
-  h1 {
-    text-align: center;
-    color: #1a73e8;
-  }
-  .container {
-    max-width: 400px;
-    margin: 0 auto;
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-  label {
-    display: block;
-    margin-top: 12px;
-    font-weight: 600;
-  }
-  input, select {
-    width: 100%;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 15px;
-    margin-top: 5px;
-  }
-  button {
-    margin-top: 20px;
-    width: 100%;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    background: #1a73e8;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  button:hover {
-    background: #1669c1;
-  }
-  #message {
-    text-align: center;
-    margin-top: 15px;
-    font-weight: bold;
-    font-size: 17px;
-  }
-  #message.error {
-    color: red;
-  }
-  #message.success {
-    color: green;
-  }
-  #gradeForm {
-    display: none; /* Hidden until code is verified */
-  }
+  body { font-family: Arial; background: #f2f5f9; margin:0; padding:30px; }
+  .container { max-width:400px; margin:auto; background:white; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+  label, input, select, button { display:block; width:100%; margin-top:10px; font-size:15px; }
+  button { background:#1a73e8; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; margin-top:20px;}
+  button:hover { background:#1669c1; }
+  #message { margin-top:15px; text-align:center; font-weight:bold; }
+  #gradeForm { display:none; }
 </style>
 </head>
 <body>
-
-<h1>Grade Submission</h1>
-
 <div class="container">
+  <h2>Student Grade Submission</h2>
 
-  <!-- Landing Page -->
+  <!-- Landing / Code Entry -->
   <div id="loginSection">
-    <label>Enter Class Code:</label>
-    <input type="password" id="accessCode" placeholder="Enter access code" required>
+    <label>Enter Class Code (from Config sheet):</label>
+    <input type="text" id="accessCode" placeholder="Enter code">
     <button id="loginButton">Continue</button>
     <div id="loginMessage"></div>
   </div>
 
-  <!-- Submission Form -->
+  <!-- Grade Form -->
   <form id="gradeForm">
     <label>Student ID:</label>
     <input type="text" id="studentId" required>
@@ -119,16 +63,13 @@
     <label>Score:</label>
     <input type="number" id="score" min="0" max="100" required>
 
-    <button type="submit">Submit Grade</button>
+    <button type="submit">Submit</button>
     <div id="message"></div>
   </form>
-
 </div>
 
 <script>
-  // 🔗 Replace with your deployed Google Apps Script Web App URL
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec";
-
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi91G6Jyt6bqovelepmOnbGEM6BYpFFEozhdVMr6aXGTAHPn6z85rzrYFRm5l-Vq4E/exec"; // <-- replace with your Web App URL
   const loginButton = document.getElementById("loginButton");
   const loginMessage = document.getElementById("loginMessage");
   const accessCode = document.getElementById("accessCode");
@@ -138,48 +79,41 @@
 
   let verifiedCode = "";
 
-  // 🧩 Step 1: Verify access code before showing form
+  // Verify code
   loginButton.addEventListener("click", async () => {
     loginMessage.textContent = "Verifying...";
-    loginMessage.style.color = "#1a73e8";
-
     const code = accessCode.value.trim();
-    if (!code) return showLoginError("Please enter a code.");
+    if (!code) { loginMessage.textContent="Enter code."; loginMessage.style.color="red"; return; }
 
     try {
-      const response = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "verifyCode", code })
+      const res = await fetch(SCRIPT_URL, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({action:"verifyCode", code})
       });
-      const result = await response.json();
-
-      if (result.success) {
+      const data = await res.json();
+      if (data.success) {
         verifiedCode = code;
-        loginSection.style.display = "none";
-        gradeForm.style.display = "block";
+        loginSection.style.display="none";
+        gradeForm.style.display="block";
       } else {
-        showLoginError("Incorrect code. Please try again.");
+        loginMessage.textContent="Incorrect code.";
+        loginMessage.style.color="red";
       }
     } catch {
-      showLoginError("Server error. Please try again.");
+      loginMessage.textContent="Server error.";
+      loginMessage.style.color="red";
     }
   });
 
-  function showLoginError(msg) {
-    loginMessage.textContent = msg;
-    loginMessage.style.color = "red";
-  }
-
-  // 🧩 Step 2: Submit grade
-  gradeForm.addEventListener("submit", async (e) => {
+  // Submit grade
+  gradeForm.addEventListener("submit", async e => {
     e.preventDefault();
-
-    message.textContent = "Submitting...";
-    message.style.color = "#1a73e8";
+    message.textContent="Submitting...";
+    message.style.color="#1a73e8";
 
     const payload = {
-      action: "submit",
+      action:"submit",
       studentId: document.getElementById("studentId").value.trim(),
       unit: document.getElementById("unit").value,
       homework: document.getElementById("homework").value,
@@ -188,36 +122,28 @@
     };
 
     try {
-      const response = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(SCRIPT_URL, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
         body: JSON.stringify(payload)
       });
-
-      const result = await response.json();
-
-      if (result.success) {
+      const data = await res.json();
+      if (data.success) {
         let count = 3;
-        message.textContent = `✅ Submission successful! Resetting in ${count}...`;
-        message.style.color = "green";
-
-        const countdown = setInterval(() => {
+        message.style.color="green";
+        message.textContent=`✅ Submission successful! Resetting in ${count}...`;
+        const interval = setInterval(()=>{
           count--;
-          if (count > 0) {
-            message.textContent = `✅ Submission successful! Resetting in ${count}...`;
-          } else {
-            clearInterval(countdown);
-            message.textContent = "";
-            gradeForm.reset();
-          }
-        }, 1000);
+          if(count>0) message.textContent=`✅ Submission successful! Resetting in ${count}...`;
+          else { clearInterval(interval); message.textContent=""; gradeForm.reset(); loginSection.style.display="block"; gradeForm.style.display="none"; accessCode.value=""; }
+        },1000);
       } else {
-        message.textContent = "❌ " + (result.message || "Submission failed.");
-        message.style.color = "red";
+        message.style.color="red";
+        message.textContent="❌ "+(data.message||"Submission failed");
       }
-    } catch (err) {
-      message.textContent = "❌ Network or server error.";
-      message.style.color = "red";
+    } catch {
+      message.style.color="red";
+      message.textContent="❌ Server error.";
     }
   });
 </script>
